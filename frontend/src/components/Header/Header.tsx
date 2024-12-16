@@ -13,6 +13,8 @@ const Header: React.FC<HeaderProps> = ({ isFirstVisit }) => {
 
   return (
     <header className={styles.header}>
+      <h1 className={styles.srOnly}>Dynamic Vision Global</h1>
+      <h2 className={styles.srOnly}>The best PR & Marketing provider in Dubai</h2>
       <Logo isFirstVisit={isFirstVisit} />
       {user && (
         <div className={styles.welcomeMessage}>
