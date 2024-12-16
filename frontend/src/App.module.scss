@@ -1,0 +1,22 @@
+.app {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.mainContent {
+  // padding: 70px 20px 20px 70px;
+  padding-top: clamp(3.75rem, 2.9688rem + 2.5vw, 4.375rem);
+  padding-right: clamp(0.625rem, -0.1563rem + 2.5vw, 1.25rem);
+  padding-bottom: 20px;
+  padding-left: clamp(3.75rem, 2.9688rem + 2.5vw, 4.375rem);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // transition: padding-left 0.3s ease-in-out;
+  
+  // &.menuExpanded {
+  //   padding-left: 270px;
+  // }
+}

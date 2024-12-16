@@ -65,6 +65,7 @@ export const ERROR_MESSAGES = {
   USER_NOT_FOUND: 'User not found',
   INVALID_TOKEN: 'Invalid or expired token',
   NOT_AUTHORIZED: 'You are not authorized to perform this action',
+  NO_TOKEN: 'Not authorized, no token',
   MISSING_CREDENTIALS: 'Please provide email and password',
   MISSING_PASSWORDS: 'Please provide current and new password',
   CURRENT_PASSWORD_WRONG: 'Current password is incorrect',
@@ -116,6 +117,7 @@ export const ERROR_MESSAGES = {
 export const SUCCESS_MESSAGES = {
   USER_REGISTERED: 'User registered successfully',
   USER_LOGGED_IN: 'User logged in successfully',
+  USER_LOGGED_OUT: 'User logged out successfully',
   PASSWORD_CHANGED: 'Password changed successfully',
   PASSWORD_RESET: 'Password reset successfully',
   PROFILE_UPDATED: 'Profile updated successfully',

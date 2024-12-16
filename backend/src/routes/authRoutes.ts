@@ -10,6 +10,7 @@ import {
   getProfile,
   updateProfile,
   toggleNewsletter,
+  logout,
 } from "../controllers/authController";
 import { protect } from "../middleware/authMiddleware";
 import {
@@ -238,5 +239,21 @@ router.patch("/profile", protect, validateUpdateProfile, updateProfile);
  *         description: Not authenticated
  */
 router.patch("/profile/newsletter", protect, toggleNewsletter);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Logout user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Not authorized, no token
+ */
+router.post("/logout", protect, logout);
 
 export default router;

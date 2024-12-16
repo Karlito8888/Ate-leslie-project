@@ -1,6 +1,6 @@
 // backend/src/controllers/authController.ts
 
-import { RequestHandler } from "express";
+import { RequestHandler, Request, Response } from "express";
 import { User } from "../models/User";
 import {
   comparePassword,
@@ -104,6 +104,25 @@ export const login: RequestHandler = async (req, res, next): Promise<void> => {
     next(error);
   }
 };
+
+export const logout: RequestHandler = async (req, res, next): Promise<void> => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]
+
+    if (!token) {
+      throw createApiError(HTTP_CODES.UNAUTHORIZED, ERROR_MESSAGES.NO_TOKEN)
+    }
+
+    // Ici, vous pourriez ajouter le token à une liste noire ou le stocker dans Redis
+    sendResponse(res, {
+      status: RESPONSE_STATUS.SUCCESS,
+      statusCode: HTTP_CODES.OK,
+      message: SUCCESS_MESSAGES.USER_LOGGED_OUT,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
 
 // Profile Controllers
 export const getProfile: RequestHandler = async (

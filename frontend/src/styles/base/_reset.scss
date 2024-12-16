@@ -1,0 +1,45 @@
+@use '../globals/variables' as *;
+
+/* Reset de base */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Accessibilité et comportement de base */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Elements de base */
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset des éléments interactifs */
+button, input, optgroup, select, textarea {
+  font: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Reset des listes */
+ol, ul {
+  list-style: none;
+}
+
+/* Reset des images */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}

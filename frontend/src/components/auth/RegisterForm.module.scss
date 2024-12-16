@@ -1,0 +1,211 @@
+@use "../../styles/globals/variables" as *;
+
+.registerContainer {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0rem, -2.5rem + 8vw, 2rem);
+  // background: linear-gradient(
+  //   135deg,
+  //   rgba($color-black, 0.95) 0%,
+  //   rgba($color-black, 0.85) 100%
+  // );
+}
+
+.registerForm {
+  width: 100%;
+  max-width: clamp(20rem, 15rem + 20vw, 30rem);
+  padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  background: rgba($color-black, 0.8);
+  border-radius: $border-radius-lg;
+  border: 1px solid rgba($color-primary, 0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba($color-black, 0.2);
+
+  h2 {
+    color: $color-white;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: clamp(1.2rem, 0.2rem + 3.2vw, 2rem);
+    letter-spacing: 2px;
+  }
+
+  .formGroup {
+    margin-bottom: 1.5rem;
+    position: relative;
+
+    input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba($color-white, 0.05);
+      border: 1px solid rgba($color-white, 0.1);
+      border-radius: $border-radius-sm;
+      color: $color-white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+
+      &::placeholder {
+        color: rgba($color-white, 0.5);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: rgba($color-primary, 0.5);
+        background: rgba($color-white, 0.08);
+      }
+
+      &.error {
+        border-color: $color-error-border;
+        animation: shake 0.5s ease-in-out;
+      }
+    }
+
+    .errorMessage {
+      position: absolute;
+      left: 0;
+      bottom: -1.2rem;
+      color: $color-error-text;
+      font-size: 0.8rem;
+      opacity: 0.9;
+      background: $color-error-bg;
+      border: 1px solid $color-error-border;
+      padding: 0.5rem;
+      border-radius: $border-radius-sm;
+    }
+  }
+
+  .apiError {
+    margin: 1rem 0;
+    padding: 0.8rem;
+    background: rgba($color-error-bg, 0.1);
+    border: 1px solid rgba($color-error-border, 0.2);
+    border-radius: $border-radius-sm;
+    color: $color-error-text;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .submitButton {
+    width: 100%;
+    padding: 0.8rem;
+    margin-top: 1rem;
+    background: $color-primary;
+    color: $color-white;
+    border: none;
+    border-radius: $border-radius-sm;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+
+    &:hover:not(:disabled) {
+      background: $color-primary-dark;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .loginLink {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: rgba($color-white, 0.7);
+    font-size: 0.8rem;
+
+    span {
+      color: $color-primary;
+      cursor: pointer;
+      transition: color 0.3s ease;
+      margin-left: 10px;
+
+      &:hover {
+        color: $color-primary-dark;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: rgba($color-white, 0.7);
+  user-select: none;
+  margin: $spacing-4 0;
+
+  .checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+
+    &:checked ~ .checkmark {
+      background-color: $color-primary;
+      border-color: $color-primary;
+
+      &:after {
+        display: block;
+      }
+    }
+
+    &:focus ~ .checkmark {
+      box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
+    }
+  }
+
+  .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 24px;
+    width: 24px;
+    background-color: rgba($color-white, 0.05);
+    border: 1px solid rgba($color-white, 0.1);
+    border-radius: $border-radius-sm;
+    transition: all 0.3s ease;
+
+    &:after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 8px;
+      top: 4px;
+      width: 5px;
+      height: 10px;
+      border: solid $color-white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+  }
+
+  &:hover {
+    color: rgba($color-white, 0.9);
+
+    .checkmark {
+      border-color: rgba($color-primary, 0.5);
+      background-color: rgba($color-white, 0.08);
+    }
+  }
+}
