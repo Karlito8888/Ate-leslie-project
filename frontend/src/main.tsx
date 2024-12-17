@@ -7,6 +7,10 @@ import App from './App'
 import Home from './pages/Home/Home'
 import RegisterForm from './components/auth/RegisterForm'
 import Login from './components/auth/Login'
+import Services from './pages/Services/Services'
+import Portfolio from './pages/Portfolio/Portfolio'
+import About from './pages/About/About'
+import Contact from './pages/Contact/Contact'
 import './styles/main.scss'
 
 const router = createBrowserRouter([
@@ -25,6 +29,22 @@ const router = createBrowserRouter([
       {
         path: '/auth/login',
         element: <Login />,
+      },
+      {
+        path: '/services',
+        element: <Services />,
+      },
+      {
+        path: '/portfolio',
+        element: <Portfolio />,
+      },
+      {
+        path: '/about',
+        element: <About />,
+      },
+      {
+        path: '/contact',
+        element: <Contact />,
       },
     ],
   },

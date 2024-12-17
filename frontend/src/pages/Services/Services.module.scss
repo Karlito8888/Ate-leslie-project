@@ -1,0 +1,525 @@
+@use "../../styles/globals/variables" as *;
+
+.servicesContent {
+  min-height: 100vh;
+  padding: clamp(4rem, 2rem + 6vw, 8rem) clamp(1rem, 0.5rem + 3vw, 3rem);
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .servicesHeader {
+    text-align: center;
+    margin-bottom: clamp(3rem, 2rem + 3vw, 5rem);
+    animation: fadeInUp 0.8s ease-out forwards;
+
+    h3 {
+      font-size: clamp(2rem, 1.5rem + 3vw, 4rem);
+      color: $color-primary;
+      margin-bottom: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: clamp(1.1rem, 1rem + 0.5vw, 1.3rem);
+      color: rgba($color-black, 0.8);
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+  }
+
+  .servicesGrid {
+    display: grid;
+    gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+    margin-bottom: clamp(4rem, 3rem + 3vw, 6rem);
+    
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .serviceCard {
+      background: rgba($color-white, 0.02);
+      border: 1px solid rgba($color-primary, 0.1);
+      border-radius: $border-radius-lg;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.8s ease-out forwards;
+      opacity: 0;
+
+      @for $i from 1 through 6 {
+        &:nth-child(#{$i}) {
+          animation-delay: #{$i * 0.1}s;
+        }
+      }
+
+      &:hover {
+        transform: translateY(-5px);
+        background: rgba($color-white, 0.05);
+        border-color: rgba($color-primary, 0.3);
+      }
+
+      h4 {
+        color: $color-primary;
+        font-size: clamp(1.2rem, 1rem + 0.5vw, 1.4rem);
+        margin-bottom: 1rem;
+        font-weight: 500;
+      }
+
+      .description {
+        color: rgba($color-black, 0.8);
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+      }
+
+      .featuresList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-top: 1px solid rgba($color-primary, 0.1);
+        padding-top: 1rem;
+
+        li {
+          color: rgba($color-black, 0.7);
+          font-size: 0.9rem;
+          padding: 0.5rem 0;
+          padding-left: 1.5rem;
+          position: relative;
+
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            background: $color-primary;
+            border-radius: 50%;
+            transform: translateY(-50%);
+          }
+        }
+      }
+    }
+  }
+
+  .processSection {
+    text-align: center;
+    margin-bottom: clamp(4rem, 3rem + 3vw, 6rem);
+    animation: fadeInUp 0.8s ease-out 0.6s forwards;
+    opacity: 0;
+
+    h4 {
+      font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+      color: $color-primary;
+      margin-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+      font-weight: 300;
+      letter-spacing: 2px;
+    }
+
+    .processList {
+      display: grid;
+      gap: 2rem;
+      
+      @media (min-width: 768px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .processStep {
+        .stepNumber {
+          display: inline-block;
+          font-size: 2rem;
+          color: $color-primary;
+          font-weight: 200;
+          margin-bottom: 1rem;
+        }
+
+        h5 {
+          color: $color-primary;
+          font-size: 1.2rem;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+        }
+
+        p {
+          color: rgba($color-black, 0.7);
+          font-size: 0.9rem;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+
+  .contactCTA {
+    text-align: center;
+    padding: clamp(3rem, 2rem + 3vw, 5rem);
+    background: rgba($color-primary, 0.1);
+    border-radius: $border-radius-lg;
+    animation: fadeInUp 0.8s ease-out 0.8s forwards;
+    opacity: 0;
+
+    h4 {
+      font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+      color: $color-primary;
+      margin-bottom: 1rem;
+      font-weight: 300;
+    }
+
+    p {
+      color: rgba($color-black, 0.8);
+      font-size: clamp(1rem, 0.9rem + 0.5vw, 1.2rem);
+      margin-bottom: 2rem;
+    }
+
+    .ctaButton {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: $color-primary;
+      color: $color-white;
+      text-decoration: none;
+      border-radius: $border-radius-sm;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: $color-primary-dark;
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+
+.servicesContainer {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .title {
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: 2.5rem;
+    color: #333;
+  }
+
+  .catalogGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+
+    .catalogCard {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+      }
+
+      .catalogPreview {
+        width: 100%;
+        height: 280px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f5f5f5;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+
+        canvas {
+          max-width: 100%;
+          height: auto;
+          object-fit: contain;
+        }
+      }
+
+      h3 {
+        font-size: 1.25rem;
+        margin: 1rem 0;
+        color: #333;
+      }
+
+      p {
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  .catalogViewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(1rem, 3vw, 2rem);
+    animation: fadeIn 0.3s ease-out;
+    overflow: hidden;
+
+    .viewerHeader {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: clamp(1rem, 2vw, 2rem);
+      background: white;
+      padding: clamp(0.75rem, 1.5vw, 2rem);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+      @media (orientation: landscape) and (max-height: 600px) {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 1rem;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(1rem, 1.5vw, 1.5rem);
+        color: #333;
+        font-weight: 500;
+      }
+    }
+
+    .backButton {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: clamp(0.875rem, 1vw, 1rem);
+      cursor: pointer;
+      padding: 0.5rem 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+
+      &:hover {
+        color: #333;
+      }
+    }
+
+    .pdfViewer {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      border-radius: 0.5rem;
+      padding: clamp(0.5rem, 2vw, 2rem);
+      margin: 0 auto;
+      width: 100%;
+      max-width: min(900px, 95vw);
+      overflow: auto;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      
+      @media (orientation: landscape) and (max-height: 600px) {
+        padding: 0.5rem;
+        margin: 0.5rem auto;
+      }
+      
+      .pdfPage {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+
+        :global {
+          .react-pdf__Document {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+          }
+
+          .react-pdf__Page {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            canvas {
+              max-width: 100% !important;
+              max-height: calc(100vh - 200px) !important;
+              width: auto !important;
+              height: auto !important;
+              object-fit: contain;
+
+              @media (orientation: landscape) and (max-height: 600px) {
+                max-height: calc(100vh - 120px) !important;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(1rem, 2vw, 2rem);
+      margin-top: clamp(1rem, 2vw, 2rem);
+      background: white;
+      padding: clamp(0.75rem, 1.5vw, 1rem);
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+      @media (orientation: landscape) and (max-height: 600px) {
+        position: fixed;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-top: 0;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+      }
+
+      .navButton {
+        background: none;
+        border: 2px solid #C6A355;
+        color: #C6A355;
+        padding: clamp(0.5rem, 1vw, 0.75rem) clamp(1rem, 1.5vw, 1.5rem);
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: clamp(0.8rem, 1vw, 0.9rem);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+
+        &:hover:not(:disabled) {
+          background: #C6A355;
+          color: white;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          border-color: #ccc;
+          color: #999;
+        }
+      }
+
+      .pageInfo {
+        color: #666;
+        font-size: clamp(0.8rem, 1vw, 0.9rem);
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .catalogViewer {
+    .viewerHeader {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .navigation {
+      @media (orientation: portrait) {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+
+        .navButton {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .catalogViewer {
+    .pdfViewer {
+      .pdfPage {
+        canvas {
+          max-height: calc(100vh - 180px) !important;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .catalogViewer {
+    padding: 0.5rem;
+
+    .viewerHeader {
+      padding: 0.75rem;
+    }
+
+    .pdfViewer {
+      border-radius: 0.25rem;
+    }
+
+    .navigation {
+      border-radius: 0.25rem;
+      padding: 0.5rem;
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #666;
+  font-size: 1rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .servicesContainer {
+    .catalogGrid {
+      grid-template-columns: 1fr;
+    }
+
+    .catalogViewer {
+      border-radius: 0;
+      
+      .viewerHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+    }
+  }
+} 

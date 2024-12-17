@@ -1,0 +1,127 @@
+@use "../../styles/globals/variables" as *;
+@use "../../styles/globals/mixins" as *;
+
+.footer {
+  background: linear-gradient(to right, #1a1a1a, #2a2a2a);
+  color: $color-white;
+  padding: 4rem 0 0;
+  font-family: 'Poppins', sans-serif;
+
+  @media (max-width: 768px) {
+    padding: 3rem 0 0;
+  }
+
+  @media (max-width: 375px) {
+    padding: 2rem 0 0;
+  }
+}
+
+.footerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+padding-left: clamp(3.75rem, 2.9688rem + 2.5vw, 4.375rem);
+padding-right: clamp(0.625rem, -0.1563rem + 2.5vw, 1.25rem);
+}
+
+.footerGrid {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.footerSection {
+  max-width: 400px;
+  
+  h3 {
+    color: #C6A355;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 0.75rem;
+    text-align: center;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 2px;
+      background: linear-gradient(135deg, #C6A355 0%, #AD8A3B 100%);
+    }
+
+    @media (max-width: 375px) {
+      font-size: 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+  }
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .contactItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .icon {
+      color: #C6A355;
+      font-size: 1.2rem;
+      margin-top: 0.25rem;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    a {
+      color: #C6A355;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-size: 0.95rem;
+
+      &:hover {
+        color: lighten(#C6A355, 10%);
+      }
+    }
+  }
+}
+
+.copyrightBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem 0;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  @media (max-width: 375px) {
+    padding: 1.25rem 0;
+    
+    p {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

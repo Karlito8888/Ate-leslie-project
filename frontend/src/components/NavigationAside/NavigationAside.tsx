@@ -55,19 +55,19 @@ const NavigationAside: React.FC<NavigationAsideProps> = ({ isFirstVisit }) => {
             </NavLink>
           </li>
           <li>
-            <NavLink to="/portfolio" className={({ isActive }) => isActive ? styles.activeLink : ''}>
-              <span className={styles.iconWrapper}>
-                <IoIosImages className={styles.icon} />
-              </span>
-              <span className={styles.linkText}>Portfolio</span>
-            </NavLink>
-          </li>
-          <li>
             <NavLink to="/services" className={({ isActive }) => isActive ? styles.activeLink : ''}>
               <span className={styles.iconWrapper}>
                 <LuBriefcaseBusiness className={styles.icon} />
               </span>
               <span className={styles.linkText}>Services</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/portfolio" className={({ isActive }) => isActive ? styles.activeLink : ''}>
+              <span className={styles.iconWrapper}>
+                <IoIosImages className={styles.icon} />
+              </span>
+              <span className={styles.linkText}>Portfolio</span>
             </NavLink>
           </li>
           <li>

@@ -1,0 +1,326 @@
+@use "../../styles/globals/variables" as *;
+
+.chatModal {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  font-family: 'Poppins', sans-serif;
+  
+  @media (max-width: 768px) {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    bottom: 1rem;
+    right: 1rem;
+    // left: 1rem;
+  }
+  
+  .chatButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: linear-gradient(135deg, #C6A355 0%, #AD8A3B 100%);
+    color: $color-white;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    user-select: none;
+    animation: bounce 2s ease-in-out infinite;
+    animation-delay: 3s;
+
+    @media (max-width: 480px) {
+      width: 3rem;
+      height: 3rem;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      animation: none;
+      background: linear-gradient(135deg, #AD8A3B 0%, #C6A355 100%);
+    }
+
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+
+      @media (max-width: 480px) {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+  }
+
+  .chatContent {
+    background: $color-white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 320px;
+    animation: slideUp 0.3s ease-out forwards;
+    transform-origin: bottom;
+
+    @media (max-width: 768px) {
+      width: 300px;
+    }
+
+    @media (max-width: 480px) {
+      width: 100%;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 0;
+      animation: slideUpFullscreen 0.3s ease-out forwards;
+    }
+
+    .chatHeader {
+      background: linear-gradient(135deg, #C6A355 0%, #AD8A3B 100%);
+      color: $color-white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 0.5rem 0.5rem 0 0;
+
+      @media (max-width: 480px) {
+        border-radius: 0;
+        padding: 1.25rem;
+      }
+
+      h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0;
+
+        @media (max-width: 480px) {
+          font-size: 1.1rem;
+        }
+      }
+
+      .closeButton {
+        background: none;
+        border: none;
+        color: $color-white;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease;
+
+        @media (max-width: 480px) {
+          padding: 0.5rem;
+        }
+
+        &:hover {
+          transform: scale(1.1);
+        }
+
+        svg {
+          width: 16px;
+          height: 16px;
+
+          @media (max-width: 480px) {
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+
+    .successMessage {
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, #C6A355 0%, #AD8A3B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+
+      @media (max-width: 480px) {
+        padding: 3rem 1.5rem;
+      }
+
+      p {
+        margin: 0.5rem 0;
+        line-height: 1.5;
+        
+        &:first-child {
+          font-weight: 500;
+          font-size: 1.1rem;
+
+          @media (max-width: 480px) {
+            font-size: 1.2rem;
+          }
+        }
+        
+        &:last-child {
+          font-size: 0.9rem;
+          color: rgba(0, 0, 0, 0.7);
+        }
+      }
+    }
+
+    .chatForm {
+      padding: 1.5rem;
+
+      @media (max-width: 480px) {
+        padding: 1.5rem;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .formGroup {
+        margin-bottom: 1.5rem;
+        position: relative;
+
+        @media (max-width: 480px) {
+          margin-bottom: 2rem;
+        }
+
+        input,
+        textarea {
+          width: 100%;
+          padding: 0.75rem;
+          border: 1px solid rgba(198, 163, 85, 0.2);
+          border-radius: 0.25rem;
+          font-family: inherit;
+          font-size: 0.9rem;
+          transition: all 0.3s ease;
+
+          @media (max-width: 480px) {
+            padding: 1rem;
+            font-size: 1rem;
+          }
+
+          &:focus {
+            outline: none;
+            border-color: #C6A355;
+            box-shadow: 0 0 0 2px rgba(198, 163, 85, 0.1);
+          }
+
+          &::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+          }
+
+          &.error {
+            border-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.05);
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 100px;
+
+          @media (max-width: 480px) {
+            min-height: 120px;
+          }
+        }
+
+        .errorMessage {
+          position: absolute;
+          left: 0;
+          bottom: -1.2rem;
+          font-size: 0.8rem;
+          color: #dc3545;
+
+          @media (max-width: 480px) {
+            bottom: -1.5rem;
+            font-size: 0.85rem;
+          }
+        }
+      }
+
+      .submitButton {
+        width: 100%;
+        padding: 0.75rem;
+        background: linear-gradient(135deg, #C6A355 0%, #AD8A3B 100%);
+        color: $color-white;
+        border: none;
+        border-radius: 0.25rem;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        @media (max-width: 480px) {
+          padding: 1rem;
+          font-size: 1rem;
+          margin-top: auto;
+        }
+
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, #AD8A3B 0%, #C6A355 100%);
+          transform: translateY(-1px);
+        }
+
+        &:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+      }
+
+      .submitError {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid #dc3545;
+        border-radius: 0.25rem;
+        color: #dc3545;
+        font-size: 0.9rem;
+        text-align: center;
+
+        @media (max-width: 480px) {
+          margin-top: 1.5rem;
+          padding: 1rem;
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpFullscreen {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 40%, 100% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(-10px);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+} 

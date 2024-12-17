@@ -4,6 +4,7 @@ import Header from './components/Header/Header'
 import NavigationAside from './components/NavigationAside/NavigationAside'
 import LoadingModal from './components/LoadingModal/LoadingModal'
 import styles from './App.module.scss'
+import Footer from './components/Footer/Footer'
 
 const App: React.FC = () => {
   const [isFirstVisit, setIsFirstVisit] = useState<boolean>(true)
@@ -31,6 +32,7 @@ const App: React.FC = () => {
       <main className={styles.mainContent}>
         <Outlet />
       </main>
+      <Footer />
     </div>
   )
 }
