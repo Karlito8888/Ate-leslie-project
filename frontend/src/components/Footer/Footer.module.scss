@@ -30,7 +30,8 @@ padding-right: clamp(0.625rem, -0.1563rem + 2.5vw, 1.25rem);
 }
 
 .footerSection {
-  max-width: 400px;
+  width: 100%;
+  max-width: 1200px;
   
   h3 {
     color: #C6A355;
@@ -60,14 +61,27 @@ padding-right: clamp(0.625rem, -0.1563rem + 2.5vw, 1.25rem);
 }
 
 .contactInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  justify-items: start;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    justify-items: center !important;
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    justify-items: center !important;
+  }
 
   .contactItem {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
+    justify-content: center;
+    text-align: left;
 
     .icon {
       color: #C6A355;
@@ -89,7 +103,7 @@ padding-right: clamp(0.625rem, -0.1563rem + 2.5vw, 1.25rem);
       font-size: 0.95rem;
 
       &:hover {
-        color: lighten(#C6A355, 10%);
+        color: #d2b676;
       }
     }
   }

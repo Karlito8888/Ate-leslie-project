@@ -35,7 +35,8 @@
     "src/**/*.js",
     "src/**/*.jsx",
     "src/**/*.scss",
-    "src/types/*.d.ts"
+    "src/types/*.d.ts",
+    "src/custom.d.ts"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

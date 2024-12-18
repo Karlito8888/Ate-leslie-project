@@ -2,13 +2,74 @@
 
 .aboutContent {
   min-height: 100vh;
-  padding: clamp(4rem, 2rem + 6vw, 8rem) clamp(1rem, 0.5rem + 3vw, 3rem);
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 100vh;
+    background: 
+      linear-gradient(
+        to right,
+        rgba($color-white, 1) 0%,
+        rgba($color-white, 0.95) 20%,
+        rgba($color-white, 0.5) 100%
+      ),
+      image-set(
+        url('../../assets/images/about/people-3912733_1920.webp') type('image/webp'),
+        url('../../assets/images/about/people-3912733_1920.jpg') type('image/jpeg')
+      ) right center/cover no-repeat;
+    z-index: -1;
+    transition: all 0.3s ease-in-out;
+    
+    @media (max-width: 1280px) {
+      width: 60%;
+      background: 
+        linear-gradient(
+          to right,
+          rgba($color-white, 1) 0%,
+          rgba($color-white, 0.9) 30%,
+          rgba($color-white, 0.6) 100%
+        ),
+        image-set(
+          url('../../assets/images/about/people-3912733_1280.webp') type('image/webp'),
+          url('../../assets/images/about/people-3912733_1280.jpg') type('image/jpeg')
+        ) right center/cover no-repeat;
+    }
+    
+    @media (max-width: 640px) {
+      width: 100%;
+      background: 
+        linear-gradient(
+          135deg,
+          rgba($color-white, 0.98) 0%,
+          rgba($color-white, 0.95) 25%,
+          rgba($color-white, 0.85) 50%,
+          rgba($color-white, 0.75) 75%,
+          rgba($color-white, 0.65) 100%
+        ),
+        image-set(
+          url('../../assets/images/about/people-3912733_640.webp') type('image/webp'),
+          url('../../assets/images/about/people-3912733_640.jpg') type('image/jpeg')
+        ) center/cover no-repeat;
+      opacity: 1;
+      
+      @media (prefers-reduced-motion: no-preference) {
+        transform: translateZ(0);
+        will-change: transform;
+        animation: subtleParallax 20s ease-in-out infinite alternate;
+      }
+    }
+  }
 
   .aboutHeader {
     text-align: center;
-    margin-bottom: clamp(4rem, 3rem + 3vw, 6rem);
+    margin-bottom: clamp(3rem, 2rem + 3vw, 5rem);
     animation: fadeInUp 0.8s ease-out forwards;
 
     h3 {
@@ -17,15 +78,6 @@
       margin-bottom: 1.5rem;
       font-weight: 300;
       letter-spacing: 2px;
-    }
-
-    .tagline {
-      font-size: clamp(1.3rem, 1.1rem + 1vw, 1.8rem);
-      color: $color-primary;
-      margin-bottom: 1rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 1px;
     }
 
     .subtitle {
@@ -217,5 +269,14 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes subtleParallax {
+  from {
+    background-position: center;
+  }
+  to {
+    background-position: center 10%;
   }
 } 

@@ -1,16 +1,73 @@
 @use '../../styles/globals/variables' as *;
 
 .loginContainer {
-  min-height: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: clamp(0rem, -2.5rem + 8vw, 2rem);
-  // background: linear-gradient(
-  //   135deg,
-  //   rgba($color-black, 0.95) 0%,
-  //   rgba($color-black, 0.85) 100%
-  // );
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 100vh;
+    background: 
+      linear-gradient(
+        to right,
+        rgba($color-white, 1) 0%,
+        rgba($color-white, 0.95) 20%,
+        rgba($color-white, 0.5) 100%
+      ),
+      image-set(
+        url('../../assets/images/login/hands-20333_1920.webp') type('image/webp'),
+        url('../../assets/images/login/hands-20333_1920.jpg') type('image/jpeg')
+      ) right center/cover no-repeat;
+    z-index: -1;
+    transition: all 0.3s ease-in-out;
+    
+    @media (max-width: 1280px) {
+      width: 60%;
+      background: 
+        linear-gradient(
+          to right,
+          rgba($color-white, 1) 0%,
+          rgba($color-white, 0.9) 30%,
+          rgba($color-white, 0.6) 100%
+        ),
+        image-set(
+          url('../../assets/images/login/hands-20333_1280.webp') type('image/webp'),
+          url('../../assets/images/login/hands-20333_1280.jpg') type('image/jpeg')
+        ) right center/cover no-repeat;
+    }
+    
+    @media (max-width: 640px) {
+      width: 100%;
+      background: 
+        linear-gradient(
+          135deg,
+          rgba($color-white, 0.98) 0%,
+          rgba($color-white, 0.95) 25%,
+          rgba($color-white, 0.85) 50%,
+          rgba($color-white, 0.75) 75%,
+          rgba($color-white, 0.65) 100%
+        ),
+        image-set(
+          url('../../assets/images/login/hands-20333_640.webp') type('image/webp'),
+          url('../../assets/images/login/hands-20333_640.jpg') type('image/jpeg')
+        ) center/cover no-repeat;
+      opacity: 1;
+      
+      @media (prefers-reduced-motion: no-preference) {
+        transform: translateZ(0);
+        will-change: transform;
+        animation: subtleParallax 20s ease-in-out infinite alternate;
+      }
+    }
+  }
 }
 
 .loginForm {
@@ -22,6 +79,7 @@
   border: 1px solid rgba($color-primary, 0.1);
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba($color-black, 0.2);
+  animation: fadeInUp 0.8s ease-out forwards;
 
   h2 {
     color: $color-white;
@@ -90,7 +148,7 @@
     width: 100%;
     padding: 0.8rem;
     margin-top: 1rem;
-    background: $color-primary-dark;
+    background: $color-primary;
     color: $color-white;
     border: none;
     border-radius: $border-radius-sm;
@@ -127,5 +185,37 @@
         text-decoration: underline;
       }
     }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes subtleParallax {
+  from {
+    background-position: center;
+  }
+  to {
+    background-position: center 10%;
   }
 }
