@@ -131,6 +131,38 @@
       padding: 0.5rem;
       border-radius: $border-radius-sm;
     }
+
+    .passwordInputWrapper {
+      position: relative;
+      width: 100%;
+
+      input {
+        width: 100%;
+        padding-right: 40px;
+      }
+
+      .togglePassword {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        color: #666;
+        
+        &:hover {
+          color: #333;
+        }
+
+        &:focus {
+          outline: none;
+        }
+      }
+    }
   }
 
   .apiError {

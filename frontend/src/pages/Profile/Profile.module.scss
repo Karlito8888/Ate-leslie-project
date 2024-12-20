@@ -201,152 +201,218 @@
 }
 
 .infoSection {
-  max-width: 600px;
-  margin: 0 auto;
+  background: rgba($color-white, 0.95);
+  padding: clamp(1rem, 3vw, 2rem);
+  border-radius: $border-radius-lg;
+  box-shadow: $box-shadow-md;
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
+    margin: 0.5rem;
+    border-radius: $border-radius-sm;
+  }
 
-  .infoForm {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-6;
-
-    .formGroup {
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-2;
-
-      label {
-        color: rgba($color-black, 0.8);
-        font-size: $font-size-base;
-      }
-
-      input, select {
-        padding: $spacing-3;
-        border: 1px solid rgba($color-primary, 0.2);
-        border-radius: $border-radius-sm;
-        font-size: $font-size-base;
-        transition: border-color 0.3s ease;
-
-        &:focus {
-          outline: none;
-          border-color: $color-primary;
-        }
-      }
-
-      .addressTitle {
-        color: $color-primary;
-        font-size: $font-size-lg;
-        margin-bottom: $spacing-4;
-        border-bottom: 1px solid rgba($color-primary, 0.2);
-        padding-bottom: $spacing-2;
-      }
-
-      .addressFields {
-        display: flex;
-        flex-direction: column;
-        gap: $spacing-4;
-
-        .formRow {
-          display: flex;
-          gap: $spacing-4;
-
-          .formGroup {
-            flex: 1;
-          }
-        }
-      }
-
-      .dateInputWrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-
-        input[type="text"] {
-          width: 100%;
-          padding-right: $spacing-8;
-        }
-
-        .calendarInput {
-          position: absolute;
-          right: 0;
-          width: $spacing-8;
-          height: 100%;
-          opacity: 0;
-          cursor: pointer;
-
-          &::-webkit-calendar-picker-indicator {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: pointer;
-          }
-        }
-
-        &::after {
-          content: "📅";
-          position: absolute;
-          right: $spacing-3;
-          top: 50%;
-          transform: translateY(-50%);
-          pointer-events: none;
-          font-size: $font-size-lg;
-        }
-      }
-
-      .helpText {
-        color: rgba($color-black, 0.6);
-        font-size: $font-size-sm;
-        margin-top: -$spacing-1;
-        font-style: italic;
-      }
-
-      &.error {
-        input, select {
-          border-color: $color-error-border;
-        }
-
-        .errorMessage {
-          color: $color-error-text;
-          font-size: $font-size-sm;
-          margin-top: $spacing-1;
-        }
-      }
+  h2 {
+    color: $color-primary;
+    margin-bottom: 2rem;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    
+    @media (max-width: 480px) {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
     }
+  }
+}
 
-    .checkboxLabel {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-      cursor: pointer;
+.infoForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
-      input[type="checkbox"] {
-        width: 1.2rem;
-        height: 1.2rem;
-        cursor: pointer;
-      }
+  @media (max-width: 480px) {
+    gap: 1rem;
+  }
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+
+  @media (max-width: 480px) {
+    margin-bottom: 0.75rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: $color-text-dark;
+    font-size: 0.9rem;
+
+    @media (max-width: 480px) {
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
     }
   }
 
-  .submitButton {
-    background: $color-primary;
-    color: $color-white;
-    border: none;
-    padding: $spacing-4;
+  input, select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid $color-border;
     border-radius: $border-radius-sm;
-    font-size: $font-size-base;
+    font-size: 1rem;
+
+    @media (max-width: 480px) {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    &::placeholder {
+      color: $color-text-light;
+      font-size: 0.9rem;
+
+      @media (max-width: 480px) {
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+.formRow {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .formGroup {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}
+
+.nameTitle, .addressTitle {
+  color: $color-primary;
+  margin: 1.5rem 0 1rem;
+  font-size: 1.2rem;
+  border-bottom: 2px solid rgba($color-primary, 0.1);
+  padding-bottom: 0.5rem;
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.75rem;
+    text-align: center;
+  }
+}
+
+.addressFields {
+  background: rgba($color-primary, 0.02);
+  padding: 1.5rem;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba($color-primary, 0.1);
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+    margin: 0 -0.5rem;
+    border-radius: $border-radius-sm;
+  }
+}
+
+.dateInputWrapper {
+  position: relative;
+
+  @media (max-width: 480px) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .calendarInput {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 2.5rem;
+    height: 100%;
+    opacity: 0;
     cursor: pointer;
-    transition: background 0.3s ease;
-    margin-top: $spacing-4;
 
-    &:hover {
-      background: $color-primary-dark;
+    @media (max-width: 480px) {
+      position: relative;
+      width: 100%;
+      height: 2.5rem;
+      opacity: 1;
     }
+  }
+}
 
-    &:disabled {
-      background: rgba($color-black, 0.3);
-      cursor: not-allowed;
-    }
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: $color-text-dark;
+  cursor: pointer;
+
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    margin: 1rem 0;
+  }
+
+  input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+  }
+}
+
+.submitButton {
+  background: $color-primary;
+  color: $color-white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 1rem;
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+  }
+
+  &:hover {
+    background: darken($color-primary, 10%);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.withSeparator {
+  position: relative;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 480px) {
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba($color-primary, 0.1);
   }
 }
 

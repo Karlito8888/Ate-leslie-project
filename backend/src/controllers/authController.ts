@@ -148,7 +148,7 @@ export const updateProfile: RequestHandler = async (
   next
 ): Promise<void> => {
   try {
-    const { email, phoneNumber, username } = req.body as UpdateProfileRequest;
+    const { email, username, birthDate, landlineNumber, mobileNumber, fullName, address, newsletter } = req.body;
 
     if (email) {
       const existingUser = await User.findOne({
@@ -178,7 +178,16 @@ export const updateProfile: RequestHandler = async (
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { email, phoneNumber, username },
+      {
+        email,
+        username,
+        birthDate,
+        landlineNumber,
+        mobileNumber,
+        fullName,
+        address,
+        newsletterSubscribed: newsletter
+      },
       { new: true }
     );
 

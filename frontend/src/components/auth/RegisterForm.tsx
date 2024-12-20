@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useRegisterMutation, useLoginMutation } from '../../store/api/authApi'
 import { setUser } from '../../store/slices/authSlice'
-import { baseUrl } from '../../store/api/baseApi'
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './RegisterForm.module.scss'
 
 // Constantes de validation
@@ -13,7 +13,8 @@ const VALIDATION_RULES = {
     MAX_LENGTH: 50
   },
   PASSWORD: {
-    MIN_LENGTH: 6
+    MIN_LENGTH: 8,
+    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
   }
 }
 
@@ -45,6 +46,8 @@ const RegisterForm: React.FC = () => {
   const dispatch = useDispatch()
   const [register, { isLoading: isRegistering, error: registerError }] = useRegisterMutation()
   const [login, { isLoading: isLoggingIn }] = useLoginMutation()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   
   const [formData, setFormData] = useState<FormData>({
     username: '',
@@ -82,6 +85,8 @@ const RegisterForm: React.FC = () => {
       errors.password = 'Password is required'
     } else if (formData.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
       errors.password = `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`
+    } else if (!VALIDATION_RULES.PASSWORD.PATTERN.test(formData.password)) {
+      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
     }
     
     // Validation de la confirmation du mot de passe
@@ -120,38 +125,26 @@ const RegisterForm: React.FC = () => {
     }
 
     try {
-      console.log('Attempting to register with data:', userData)
-      const registerResult = await register(userData).unwrap()
-      console.log('Registration response:', registerResult)
-      
-      // Connexion automatique après l'inscription
-      try {
-        const loginResponse = await login({
-          email: formData.email,
-          password: formData.password
-        }).unwrap()
-        
-        if (loginResponse.token) {
-          localStorage.setItem('token', loginResponse.token)
-          // Mise à jour du state Redux avec les informations de l'utilisateur
-          dispatch(setUser(loginResponse.data.user))
-          console.log('Token stored and user state updated:', loginResponse)
-          navigate('/')
-        } else {
-          console.error('No token in response:', loginResponse)
-          navigate('/auth/login')
-        }
-      } catch (loginErr) {
-        console.error('Auto-login failed:', loginErr)
-        navigate('/auth/login')
+      await register(userData).unwrap()
+
+      // After successful registration, automatically log in
+      const loginResponse = await login({
+        email: formData.email,
+        password: formData.password
+      }).unwrap()
+
+      if (loginResponse.token) {
+        localStorage.setItem('token', loginResponse.token)
+        dispatch(setUser(loginResponse.data.user))
+        navigate('/')
       }
-    } catch (err) {
-      console.error('Registration failed - Full error:', err)
-      console.log('Request details:', {
-        url: `${baseUrl}/api/auth/register`,
-        method: 'POST',
-        data: userData
-      })
+    } catch (err: any) {
+      // console.log('Request details:', {
+      //   url: err?.request?.url,
+      //   method: err?.request?.method,
+      //   headers: err?.request?.headers,
+      //   body: err?.request?.body
+      // })
     }
   }
 
@@ -203,28 +196,48 @@ const RegisterForm: React.FC = () => {
         </div>
 
         <div className={styles.formGroup}>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Password"
-            className={validationErrors.password ? styles.error : ''}
-          />
+          <div className={styles.passwordInputWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Password"
+              className={validationErrors.password ? styles.error : ''}
+            />
+            <button
+              type="button"
+              className={styles.togglePassword}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {validationErrors.password && (
             <span className={styles.errorMessage}>{validationErrors.password}</span>
           )}
         </div>
 
         <div className={styles.formGroup}>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm Password"
-            className={validationErrors.confirmPassword ? styles.error : ''}
-          />
+          <div className={styles.passwordInputWrapper}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm Password"
+              className={validationErrors.confirmPassword ? styles.error : ''}
+            />
+            <button
+              type="button"
+              className={styles.togglePassword}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {validationErrors.confirmPassword && (
             <span className={styles.errorMessage}>{validationErrors.confirmPassword}</span>
           )}

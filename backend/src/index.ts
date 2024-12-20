@@ -18,7 +18,10 @@ dotenv.config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -42,7 +45,7 @@ export const connectDB = async (): Promise<void> => {
       throw new Error("MONGODB_URI is missing in environment variables");
     }
     await mongoose.connect(mongoURI);
-    console.log("MongoDB connected successfully");
+    // console.log("MongoDB connected successfully");
   } catch (error) {
     console.error("MongoDB connection error:", error);
     process.exit(1);
@@ -55,8 +58,8 @@ const startServer = async (): Promise<void> => {
     const PORT = process.env.PORT || 5000;
     await connectDB();
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`API documentation available at http://localhost:${PORT}/api-docs`);
+      // console.log(`Server is running on port ${PORT}`);
+      // console.log(`API documentation available at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
     console.error("Failed to start server:", error);

@@ -8,12 +8,19 @@ export type UserRole = "user" | "admin";
 interface Address {
   unit?: string;
   buildingName?: string;
-  streetNumber: string;
-  streetName: string;
+  streetNumber?: string;
+  streetName?: string;
   poBox?: string;
-  district: string;
-  city: string;
-  emirate: string;
+  district?: string;
+  city?: string;
+  emirate?: string;
+}
+
+interface FullName {
+  firstName?: string;
+  fatherName?: string;
+  lastName?: string;
+  gender?: 'male' | 'female';
 }
 
 interface ValidatorProps {
@@ -23,12 +30,38 @@ interface ValidatorProps {
 const addressSchema = new mongoose.Schema<Address>({
   unit: { type: String },
   buildingName: { type: String },
-  streetNumber: { type: String, required: true },
-  streetName: { type: String, required: true },
+  streetNumber: { type: String },
+  streetName: { type: String },
   poBox: { type: String },
-  district: { type: String, required: true },
-  city: { type: String, required: true },
-  emirate: { type: String, required: true }
+  district: { type: String },
+  city: { type: String },
+  emirate: { type: String }
+}, { _id: false });
+
+const fullNameSchema = new mongoose.Schema<FullName>({
+  firstName: { 
+    type: String, 
+    trim: true,
+    minlength: 2,
+    maxlength: 50
+  },
+  fatherName: { 
+    type: String,
+    trim: true,
+    minlength: 2,
+    maxlength: 50
+  },
+  lastName: { 
+    type: String,
+    trim: true,
+    minlength: 2,
+    maxlength: 50
+  },
+  gender: { 
+    type: String,
+    enum: ['male', 'female'],
+    default: 'male'
+  }
 }, { _id: false });
 
 export interface IUser extends Document {
@@ -37,6 +70,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  fullName?: FullName;
   landlineNumber?: string;
   mobileNumber?: string;
   birthDate?: Date;
@@ -73,12 +107,16 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    fullName: {
+      type: fullNameSchema,
+      required: false
+    },
     landlineNumber: {
       type: String,
       sparse: true,
       validate: {
         validator: function(v: string) {
-          return /^\+971 [2-9] [2-8][0-9]{6}$/.test(v);
+          return !v || /^\+971 [2-9] [2-8][0-9]{6}$/.test(v);
         },
         message: (props: ValidatorProps) => `${props.value} is not a valid UAE landline number!`
       }
@@ -88,7 +126,7 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       validate: {
         validator: function(v: string) {
-          return /^\+971 5[024568] [0-9]{3} [0-9]{4}$/.test(v);
+          return !v || /^\+971 5[024568] [0-9]{3} [0-9]{4}$/.test(v);
         },
         message: (props: ValidatorProps) => `${props.value} is not a valid UAE mobile number!`
       }

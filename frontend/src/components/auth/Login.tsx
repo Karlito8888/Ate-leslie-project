@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useLoginMutation } from '../../store/api/authApi'
 import { setUser } from '../../store/slices/authSlice'
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './Login.module.scss'
 
 interface FormData {
@@ -15,10 +16,19 @@ interface ValidationErrors {
   password?: string
 }
 
+// Constantes de validation
+const VALIDATION_RULES = {
+  PASSWORD: {
+    MIN_LENGTH: 8,
+    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  }
+}
+
 const Login: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [login, { isLoading, error }] = useLoginMutation()
+  const [showPassword, setShowPassword] = useState(false)
   
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -38,6 +48,10 @@ const Login: React.FC = () => {
     
     if (!formData.password) {
       errors.password = 'Password is required'
+    } else if (formData.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
+      errors.password = `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`
+    } else if (!VALIDATION_RULES.PASSWORD.PATTERN.test(formData.password)) {
+      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
     }
 
     setValidationErrors(errors)
@@ -63,12 +77,12 @@ const Login: React.FC = () => {
         password: formData.password
       }).unwrap()
       
-      console.log('Login response:', response)
-      
+      // console.log('Login response:', response)
+
       if (response.token) {
         localStorage.setItem('token', response.token)
         dispatch(setUser(response.data.user))
-        console.log('Token stored and user state updated:', response)
+        // console.log('Token stored and user state updated:', response)
         navigate('/')
       } else {
         console.error('No token in response:', response)
@@ -98,14 +112,24 @@ const Login: React.FC = () => {
         </div>
 
         <div className={styles.formGroup}>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Password"
-            className={validationErrors.password ? styles.error : ''}
-          />
+          <div className={styles.passwordInputWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Password"
+              className={validationErrors.password ? styles.error : ''}
+            />
+            <button
+              type="button"
+              className={styles.togglePassword}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {validationErrors.password && (
             <span className={styles.errorMessage}>{validationErrors.password}</span>
           )}

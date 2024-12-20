@@ -11,13 +11,13 @@ html {
 
 body {
   font-family: variables.$font-family-base;
-  color: variables.$color-gray-900;
+  color: variables.$color-text-dark;
   background-color: variables.$color-white;
   height: 100%;
   width: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: 1px;
+  letter-spacing: variables.$letter-spacing-normal;
 }
 
 /* Utilitaires globaux */

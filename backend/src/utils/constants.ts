@@ -5,7 +5,8 @@ export const VALIDATION_RULES = {
     MAX_LENGTH: 50
   },
   PASSWORD: {
-    MIN_LENGTH: 6
+    MIN_LENGTH: 8,
+    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
   },
   EVENT: {
     TITLE_MIN_LENGTH: 3,
@@ -73,7 +74,7 @@ export const ERROR_MESSAGES = {
   
   // Validation errors
   USERNAME_LENGTH: `Username must be between ${VALIDATION_RULES.USERNAME.MIN_LENGTH} and ${VALIDATION_RULES.USERNAME.MAX_LENGTH} characters`,
-  PASSWORD_LENGTH: `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`,
+  PASSWORD_LENGTH: `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters and contain at least one uppercase letter, one lowercase letter, one number and one special character`,
   INVALID_EMAIL: 'Please provide a valid email address',
   INVALID_PHONE: 'Please provide a valid phone number',
   

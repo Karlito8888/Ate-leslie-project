@@ -1,0 +1,36 @@
+// Custom styles for react-toastify
+.Toastify__toast {
+  background: #fff !important;
+  color: #333 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+.Toastify__toast-body {
+  font-family: inherit !important;
+  font-size: 14px !important;
+}
+
+.Toastify__progress-bar {
+  background: #C6A355 !important;
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid #C6A355 !important;
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid #AD8A3B !important;
+}
+
+.Toastify__close-button {
+  color: #333 !important;
+  opacity: 0.7 !important;
+  
+  &:hover {
+    opacity: 1 !important;
+  }
+} 

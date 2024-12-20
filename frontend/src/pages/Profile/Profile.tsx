@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '../../store/slices/authSlice'
 import { useGetUserProfileQuery, useUpdateUserProfileMutation } from '../../store/api/userApi'
 import { UserInfo } from '../../types/user'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import styles from './Profile.module.scss'
 
 // Types pour les différentes sections
@@ -49,26 +51,21 @@ interface Message {
   read: boolean
 }
 
-interface Address {
-  unit?: string
-  buildingName?: string
-  streetNumber: string
-  streetName: string
-  poBox?: string
-  district: string
-  city: string
-  emirate: string
-}
-
 const Profile: React.FC = () => {
   const user = useSelector(selectCurrentUser)
-  const { data: userData, isLoading: isLoadingProfile, error: profileError } = useGetUserProfileQuery(user?._id || '', {
-    skip: !user?._id,
-  })
+  const { data: userData, isLoading: isLoadingProfile, error: profileError } = useGetUserProfileQuery()
   const [updateProfile, { isLoading: isUpdating }] = useUpdateUserProfileMutation()
 
   const [activeTab, setActiveTab] = useState<string>('quotes')
   const [userInfo, setUserInfo] = useState<UserInfo>({
+    username: '',
+    email: '',
+    fullName: {
+      firstName: '',
+      fatherName: '',
+      lastName: '',
+      gender: 'male'
+    },
     landlineNumber: '',
     mobileNumber: '',
     birthDate: '',
@@ -88,6 +85,14 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (userData) {
       setUserInfo({
+        username: userData.username || '',
+        email: userData.email || '',
+        fullName: userData.fullName || {
+          firstName: '',
+          fatherName: '',
+          lastName: '',
+          gender: 'male'
+        },
         landlineNumber: userData.landlineNumber || '',
         mobileNumber: userData.mobileNumber || '',
         birthDate: userData.birthDate || '',
@@ -140,7 +145,7 @@ const Profile: React.FC = () => {
            year <= new Date().getFullYear()
   }
 
-  const formatDateForInput = (dateStr: string): string => {
+  const formatDateForInput = (dateStr: string | undefined): string => {
     if (!dateStr) return ''
     if (dateStr.includes('-')) return dateStr // Already in YYYY-MM-DD format
     
@@ -192,10 +197,13 @@ const Profile: React.FC = () => {
         // Handle manual text input
         const formattedDate = formatDateInput(value)
         if (formattedDate.length <= 10) {
-          setUserInfo(prev => ({
-            ...prev,
-            birthDate: formattedDate
-          }))
+          // Only update if the date is valid or incomplete
+          if (formattedDate.length < 10 || isValidDate(formattedDate)) {
+            setUserInfo(prev => ({
+              ...prev,
+              birthDate: formattedDate
+            }))
+          }
         }
       }
       return
@@ -220,24 +228,66 @@ const Profile: React.FC = () => {
     }
   }
 
+  const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setUserInfo(prev => ({
+      ...prev,
+      fullName: {
+        ...(prev.fullName || {}),
+        [name]: value
+      }
+    }));
+    
+    // Log pour déboguer
+    // console.log('Updated fullName:', {
+    //   ...(userInfo.fullName || {}),
+    //   [name]: value
+    // });
+  };
+
   const handleUserInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validate birth date before submitting
-    if (!isValidDate(userInfo.birthDate)) {
-      alert('Please enter a valid birth date')
-      return
+    // Convert date format for submission
+    const formData = { ...userInfo }
+    if (formData.birthDate) {
+      // Log the date before conversion
+      // console.log('Original birth date:', formData.birthDate)
+      
+      // Convert from DD/MM/YYYY to a proper ISO date string
+      const [day, month, year] = formData.birthDate.split('/')
+      const date = new Date(Number(year), Number(month) - 1, Number(day))
+      formData.birthDate = date.toISOString()
+      
+      // Log the date after conversion
+      // console.log('Converted birth date:', formData.birthDate)
     }
 
+    // Log pour déboguer
+    // console.log('Submitting form data:', formData);
+
     try {
-      await updateProfile({
-        userId: user!._id,
-        userData: userInfo
-      }).unwrap()
-      alert('Profile updated successfully')
+      await updateProfile(formData).unwrap()
+      toast.success('Profile updated successfully', {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored"
+      })
     } catch (err) {
       console.error('Failed to update profile:', err)
-      alert('Failed to update profile')
+      toast.error('Failed to update profile. Please try again.', {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored"
+      })
     }
   }
 
@@ -299,7 +349,35 @@ const Profile: React.FC = () => {
             <h2>Personal Information</h2>
             <form onSubmit={handleUserInfoSubmit} className={styles.infoForm}>
               <div className={styles.formGroup}>
-                <label htmlFor="landlineNumber">Fixed Line Number (Landline)</label>
+                <label htmlFor="username">Username</label>
+                <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={userInfo.username}
+                  onChange={handleUserInfoChange}
+                  placeholder="Your username"
+                  required
+                  minLength={3}
+                  maxLength={50}
+                />
+              </div>
+
+              <div className={`${styles.formGroup} ${styles.withSeparator}`}>
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={userInfo.email}
+                  onChange={handleUserInfoChange}
+                  placeholder="Your email address"
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="landlineNumber">Landline Number</label>
                 <input
                   type="tel"
                   id="landlineNumber"
@@ -310,10 +388,9 @@ const Profile: React.FC = () => {
                   pattern="\+971 [2-9] [2-8][0-9]{6}"
                   title="Please enter a valid UAE landline number format: +971 followed by area code (2-9) and 7 digits (second digit 2-8). Example: +971 4 234 5678"
                 />
-                {/* <small className={styles.helpText}>Area codes 2-9 represent different emirates; the second digit must be 2-8</small> */}
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.withSeparator}`}>
                 <label htmlFor="mobileNumber">Mobile Number</label>
                 <input
                   type="tel"
@@ -325,10 +402,9 @@ const Profile: React.FC = () => {
                   pattern="\+971 5[024568] [0-9]{3} [0-9]{4}"
                   title="Please enter a valid UAE mobile number format: +971 followed by valid prefix (50, 52, 54, 55, 56, 58) and 7 digits. Example: +971 50 123 4567"
                 />
-                {/* <small className={styles.helpText}>Valid prefixes: 50, 52, 54, 55, 56, 58</small> */}
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.withSeparator}`}>
                 <label htmlFor="birthDate">Birth Date</label>
                 <div className={styles.dateInputWrapper}>
                   <input
@@ -353,10 +429,65 @@ const Profile: React.FC = () => {
                     lang="en"
                   />
                 </div>
-                {/* <small className={styles.helpText}>Format: DD/MM/YYYY (e.g., 15/03/1990)</small> */}
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={`${styles.formGroup} ${styles.withSeparator}`}>
+                <h3 className={styles.nameTitle}>Full Name</h3>
+                <div className={styles.nameFields}>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="firstName">First Name</label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        value={userInfo.fullName?.firstName || ''}
+                        onChange={handleFullNameChange}
+                        placeholder="First Name"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="fatherName">Father's Name (optional)</label>
+                      <input
+                        type="text"
+                        id="fatherName"
+                        name="fatherName"
+                        value={userInfo.fullName?.fatherName || ''}
+                        onChange={handleFullNameChange}
+                        placeholder="Father's Name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="lastName">Family Name</label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        value={userInfo.fullName?.lastName || ''}
+                        onChange={handleFullNameChange}
+                        placeholder="Family Name"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="gender">Gender</label>
+                      <select
+                        id="gender"
+                        name="gender"
+                        value={userInfo.fullName?.gender || 'male'}
+                        onChange={handleFullNameChange}
+                      >
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`${styles.formGroup} ${styles.withSeparator}`}>
                 <h3 className={styles.addressTitle}>Address</h3>
                 <div className={styles.addressFields}>
                   <div className={styles.formRow}>
@@ -366,9 +497,9 @@ const Profile: React.FC = () => {
                         type="text"
                         id="unit"
                         name="address.unit"
-                        value={userInfo.address.unit}
+                        value={userInfo.address?.unit || ''}
                         onChange={handleUserInfoChange}
-                        placeholder="e.g., Apt 707"
+                        placeholder="Unit/Apartment Number"
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -377,9 +508,9 @@ const Profile: React.FC = () => {
                         type="text"
                         id="buildingName"
                         name="address.buildingName"
-                        value={userInfo.address.buildingName}
+                        value={userInfo.address?.buildingName || ''}
                         onChange={handleUserInfoChange}
-                        placeholder="e.g., White Swan Building"
+                        placeholder="Building Name"
                       />
                     </div>
                   </div>
@@ -391,10 +522,9 @@ const Profile: React.FC = () => {
                         type="text"
                         id="streetNumber"
                         name="address.streetNumber"
-                        value={userInfo.address.streetNumber}
+                        value={userInfo.address?.streetNumber || ''}
                         onChange={handleUserInfoChange}
-                        placeholder="e.g., 1"
-                        required
+                        placeholder="Street Number"
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -403,10 +533,9 @@ const Profile: React.FC = () => {
                         type="text"
                         id="streetName"
                         name="address.streetName"
-                        value={userInfo.address.streetName}
+                        value={userInfo.address?.streetName || ''}
                         onChange={handleUserInfoChange}
-                        placeholder="e.g., Street 8A"
-                        required
+                        placeholder="Street Name"
                       />
                     </div>
                   </div>
@@ -417,9 +546,9 @@ const Profile: React.FC = () => {
                       type="text"
                       id="poBox"
                       name="address.poBox"
-                      value={userInfo.address.poBox}
+                      value={userInfo.address?.poBox || ''}
                       onChange={handleUserInfoChange}
-                      placeholder="e.g., PO Box 54"
+                      placeholder="P.O. Box"
                     />
                   </div>
 
@@ -429,10 +558,9 @@ const Profile: React.FC = () => {
                       type="text"
                       id="district"
                       name="address.district"
-                      value={userInfo.address.district}
+                      value={userInfo.address?.district || ''}
                       onChange={handleUserInfoChange}
-                      placeholder="e.g., Za'abeel 2"
-                      required
+                      placeholder="District"
                     />
                   </div>
 
@@ -443,10 +571,9 @@ const Profile: React.FC = () => {
                         type="text"
                         id="city"
                         name="address.city"
-                        value={userInfo.address.city}
+                        value={userInfo.address?.city || ''}
                         onChange={handleUserInfoChange}
-                        placeholder="e.g., Dubai"
-                        required
+                        placeholder="City"
                       />
                     </div>
                     <div className={styles.formGroup}>
@@ -454,9 +581,8 @@ const Profile: React.FC = () => {
                       <select
                         id="emirate"
                         name="address.emirate"
-                        value={userInfo.address.emirate}
+                        value={userInfo.address?.emirate || ''}
                         onChange={handleUserInfoChange}
-                        required
                       >
                         <option value="">Select an emirate</option>
                         <option value="AZ">Abu Dhabi (AD)</option>

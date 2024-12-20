@@ -3,6 +3,9 @@ import { Outlet } from 'react-router-dom'
 import Header from './components/Header/Header'
 import NavigationAside from './components/NavigationAside/NavigationAside'
 import LoadingModal from './components/LoadingModal/LoadingModal'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import './styles/globals/_toast.scss'
 import styles from './App.module.scss'
 import Footer from './components/Footer/Footer'
 
@@ -26,6 +29,18 @@ const App: React.FC = () => {
 
   return (
     <div className={styles.app}>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       {isFirstVisit && <LoadingModal />}
       <Header isFirstVisit={isFirstVisit} />
       <NavigationAside isFirstVisit={isFirstVisit} />

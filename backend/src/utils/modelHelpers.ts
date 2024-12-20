@@ -7,18 +7,24 @@ export interface UserResponse {
   id: string;
   username: string;
   email: string;
+  fullName?: {
+    firstName?: string;
+    fatherName?: string;
+    lastName?: string;
+    gender?: 'male' | 'female';
+  };
   landlineNumber?: string;
   mobileNumber?: string;
   birthDate?: string;
   address?: {
     unit?: string;
     buildingName?: string;
-    streetNumber: string;
-    streetName: string;
+    streetNumber?: string;
+    streetName?: string;
     poBox?: string;
-    district: string;
-    city: string;
-    emirate: string;
+    district?: string;
+    city?: string;
+    emirate?: string;
   };
   newsletterSubscribed: boolean;
 }
@@ -41,6 +47,7 @@ export const formatUserResponse = (user: IUser): UserResponse => ({
   id: user._id.toString(),
   username: user.username,
   email: user.email,
+  fullName: user.fullName,
   landlineNumber: user.landlineNumber,
   mobileNumber: user.mobileNumber,
   birthDate: user.birthDate?.toISOString(),
