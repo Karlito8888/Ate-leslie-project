@@ -4,6 +4,9 @@ import styles from './Services.module.scss';
 import kiosk from '../../assets/images/services/acai-kiosk-small.jpg';
 import exhibition from '../../assets/images/services/exhibition.jpg';
 import gifts from '../../assets/images/services/corporate-gifts.jpg';
+import architecture from '../../assets/images/services/indoor-2595820_640.jpg';
+import awards from '../../assets/images/services/achievement-4269756_640.jpg';
+import signage from '../../assets/images/services/architecture-2562433_640.jpg';
 
 interface ServiceInfo {
   id: number;
@@ -42,19 +45,19 @@ const additionalServices: ServiceInfo[] = [
     id: 4,
     title: "Architecture & Interiors",
     description: "Professional architectural and interior design solutions.",
-    image: ""
+    image: architecture
   },
   {
     id: 5,
     title: "Awards & Trophies",
     description: "Custom-made awards and trophies for special recognition.",
-    image: ""
+    image: awards
   },
   {
     id: 6,
-    title: "Others",
+    title: "Stands & Signage",
     description: "Additional specialized services tailored to your needs.",
-    image: ""
+    image: signage
   }
 ];
 
@@ -69,13 +72,13 @@ const catalogs: CatalogInfo[] = [
   {
     id: 1,
     title: "National Day Special",
-    description: "Discover our exclusive collection for national celebrations",
+    description: "Discover our exclusive collection for national celebrations.",
     path: "/pdf/catalogs/National_Day_Catalogue.pdf"
   },
   {
     id: 2,
     title: "Ramadan Gifts",
-    description: "Browse our special Ramadan gift selection",
+    description: "Browse our special Ramadan gift selection.",
     path: "/pdf/catalogs/Ramadan_Gifts.pdf"
   }
 ];
@@ -122,7 +125,7 @@ const Services: React.FC = () => {
       <div className={styles.servicesHeader}>
         <h3>Our Services</h3>
         <p className={styles.subtitle}>
-          Discover our comprehensive range of professional services tailored to meet your needs
+          Discover our comprehensive range of professional services tailored to meet your needs.
         </p>
       </div>
 
@@ -146,7 +149,13 @@ const Services: React.FC = () => {
         <h4>Additional Services</h4>
         <div className={styles.servicesGrid}>
           {additionalServices.map((service) => (
-            <div key={service.id} className={styles.additionalServiceCard}>
+            <div 
+              key={service.id} 
+              className={styles.additionalServiceCard}
+              style={service.image ? {
+                '--service-background-image': `url(${service.image})`
+              } as React.CSSProperties : undefined}
+            >
               <h5>{service.title}</h5>
               <p>{service.description}</p>
             </div>

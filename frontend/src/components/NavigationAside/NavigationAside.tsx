@@ -67,7 +67,7 @@ const NavigationAside: React.FC<NavigationAsideProps> = ({ isFirstVisit }) => {
               <span className={styles.iconWrapper}>
                 <IoIosImages className={styles.icon} />
               </span>
-              <span className={styles.linkText}>Portfolio</span>
+              <span className={styles.linkText}>Events & Projects</span>
             </NavLink>
           </li>
           <li>

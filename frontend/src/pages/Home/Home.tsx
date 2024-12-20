@@ -2,6 +2,9 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import ChatModal from '../../components/ChatModal/ChatModal'
 import styles from './Home.module.scss'
+import kiosk from '../../assets/images/services/acai-kiosk-small.jpg'
+import exhibition from '../../assets/images/services/exhibition.jpg'
+import gifts from '../../assets/images/services/corporate-gifts.jpg'
 
 const Home: React.FC = () => {
   return (
@@ -35,20 +38,19 @@ const Home: React.FC = () => {
         <h3>Our Services</h3>
         <div className={styles.servicesGrid}>
           <div className={styles.serviceCard}>
-            <h4>Public Relations</h4>
-            <p>Strategic communication to build and maintain a positive public image.</p>
+            <img src={kiosk} alt="Indoor & Outdoor Kiosk" className={styles.serviceImage} />
+            <h4>Indoor & Outdoor Kiosk</h4>
+            <p>Bespoke solutions with comprehensive design process, from concept to execution.</p>
           </div>
           <div className={styles.serviceCard}>
-            <h4>Marketing Strategy</h4>
-            <p>Comprehensive marketing solutions tailored to your business goals.</p>
+            <img src={exhibition} alt="Exhibition Standard" className={styles.serviceImage} />
+            <h4>Exhibition Standard</h4>
+            <p>Custom exhibition booth designs that showcase your corporate identity.</p>
           </div>
           <div className={styles.serviceCard}>
-            <h4>Brand Development</h4>
-            <p>Creating and evolving brands that stand out in the market.</p>
-          </div>
-          <div className={styles.serviceCard}>
-            <h4>Social Media</h4>
-            <p>Engaging content and community management across platforms.</p>
+            <img src={gifts} alt="Corporate Gift Items" className={styles.serviceImage} />
+            <h4>Corporate Gift Items</h4>
+            <p>Wide selection of corporate gifts that perfectly represent your brand.</p>
           </div>
         </div>
         <Link to="/services" className={styles.seeMoreButton}>
