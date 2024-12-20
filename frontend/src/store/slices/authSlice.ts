@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '../store'
 
 interface User {
+  id: string
   username: string
   email: string
   role: string
@@ -26,6 +27,7 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action: PayloadAction<User | null>) => {
       state.user = action.payload
+      state.isAuthenticated = !!action.payload
     },
     clearAuth: (state) => {
       state.user = null

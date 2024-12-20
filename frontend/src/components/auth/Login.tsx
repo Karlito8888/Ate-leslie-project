@@ -1,6 +1,8 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 import { useLoginMutation } from '../../store/api/authApi'
+import { setUser } from '../../store/slices/authSlice'
 import styles from './Login.module.scss'
 
 interface FormData {
@@ -15,6 +17,7 @@ interface ValidationErrors {
 
 const Login: React.FC = () => {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [login, { isLoading, error }] = useLoginMutation()
   
   const [formData, setFormData] = useState<FormData>({
@@ -64,12 +67,12 @@ const Login: React.FC = () => {
       
       if (response.token) {
         localStorage.setItem('token', response.token)
-        console.log('Token stored:', response.token)
+        dispatch(setUser(response.data.user))
+        console.log('Token stored and user state updated:', response)
+        navigate('/')
       } else {
         console.error('No token in response:', response)
       }
-      
-      navigate('/')
     } catch (err) {
       console.error('Login failed:', err)
     }

@@ -1,6 +1,8 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useRegisterMutation } from '../../store/api/authApi'
+import { useDispatch } from 'react-redux'
+import { useRegisterMutation, useLoginMutation } from '../../store/api/authApi'
+import { setUser } from '../../store/slices/authSlice'
 import { baseUrl } from '../../store/api/baseApi'
 import styles from './RegisterForm.module.scss'
 
@@ -40,7 +42,9 @@ interface ValidationErrors {
 
 const RegisterForm: React.FC = () => {
   const navigate = useNavigate()
-  const [register, { isLoading, error }] = useRegisterMutation()
+  const dispatch = useDispatch()
+  const [register, { isLoading: isRegistering, error: registerError }] = useRegisterMutation()
+  const [login, { isLoading: isLoggingIn }] = useLoginMutation()
   
   const [formData, setFormData] = useState<FormData>({
     username: '',
@@ -117,9 +121,30 @@ const RegisterForm: React.FC = () => {
 
     try {
       console.log('Attempting to register with data:', userData)
-      const result = await register(userData).unwrap()
-      console.log('Registration response:', result)
-      navigate('/auth/login')
+      const registerResult = await register(userData).unwrap()
+      console.log('Registration response:', registerResult)
+      
+      // Connexion automatique après l'inscription
+      try {
+        const loginResponse = await login({
+          email: formData.email,
+          password: formData.password
+        }).unwrap()
+        
+        if (loginResponse.token) {
+          localStorage.setItem('token', loginResponse.token)
+          // Mise à jour du state Redux avec les informations de l'utilisateur
+          dispatch(setUser(loginResponse.data.user))
+          console.log('Token stored and user state updated:', loginResponse)
+          navigate('/')
+        } else {
+          console.error('No token in response:', loginResponse)
+          navigate('/auth/login')
+        }
+      } catch (loginErr) {
+        console.error('Auto-login failed:', loginErr)
+        navigate('/auth/login')
+      }
     } catch (err) {
       console.error('Registration failed - Full error:', err)
       console.log('Request details:', {
@@ -219,18 +244,18 @@ const RegisterForm: React.FC = () => {
           </label>
         </div>
 
-        {error && 'data' in error && (
+        {registerError && 'data' in registerError && (
           <div className={styles.apiError}>
-            {(error.data as { message?: string })?.message || 'An error occurred during registration'}
+            {(registerError.data as { message?: string })?.message || 'An error occurred during registration'}
           </div>
         )}
 
         <button 
           type="submit" 
           className={styles.submitButton}
-          disabled={isLoading}
+          disabled={isRegistering || isLoggingIn}
         >
-          {isLoading ? 'Creating Account...' : 'Sign Up'}
+          {isRegistering ? 'Creating Account...' : isLoggingIn ? 'Logging in...' : 'Sign Up'}
         </button>
 
         <p className={styles.loginLink}>
