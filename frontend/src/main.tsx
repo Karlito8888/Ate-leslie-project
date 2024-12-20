@@ -11,6 +11,8 @@ import Services from './pages/Services/Services'
 import Portfolio from './pages/Portfolio/Portfolio'
 import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
+import Profile from './pages/Profile/Profile'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import './styles/main.scss'
 
 const router = createBrowserRouter([
@@ -45,6 +47,14 @@ const router = createBrowserRouter([
       {
         path: '/contact',
         element: <Contact />,
+      },
+      {
+        path: '/profile',
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
       },
     ],
   },
