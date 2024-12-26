@@ -7,6 +7,7 @@ export interface UserResponse {
   id: string;
   username: string;
   email: string;
+  role: string;
   fullName?: {
     firstName?: string;
     fatherName?: string;
@@ -47,6 +48,7 @@ export const formatUserResponse = (user: IUser): UserResponse => ({
   id: user._id.toString(),
   username: user.username,
   email: user.email,
+  role: user.role,
   fullName: user.fullName,
   landlineNumber: user.landlineNumber,
   mobileNumber: user.mobileNumber,

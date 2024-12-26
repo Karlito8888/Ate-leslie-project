@@ -141,7 +141,7 @@
   transition: background 0.3s ease;
 
   &:hover {
-    background: $color-primary-dark;
+    background: #1a5f7a;
   }
 }
 
@@ -386,7 +386,7 @@
   }
 
   &:hover {
-    background: darken($color-primary, 10%);
+    background: #1a5f7a;
   }
 
   &:disabled {

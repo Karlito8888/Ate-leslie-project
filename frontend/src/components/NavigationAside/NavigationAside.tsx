@@ -3,11 +3,12 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { RiHome2Line, RiLogoutCircleLine } from "react-icons/ri"
 import { IoIosImages } from "react-icons/io"
 import { LuBriefcaseBusiness, LuUserRoundPen } from "react-icons/lu"
+import { MdOutlineAdminPanelSettings } from "react-icons/md"
 import { BsInfoSquare } from "react-icons/bs"
 import { TiMessages } from "react-icons/ti"
 import { FiUserPlus, FiLogIn } from "react-icons/fi"
-import { useDispatch } from 'react-redux'
-import { clearAuth } from '../../store/slices/authSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import { clearAuth, selectCurrentUser } from '../../store/slices/authSlice'
 import styles from './NavigationAside.module.scss'
 
 interface NavigationAsideProps {
@@ -17,7 +18,13 @@ interface NavigationAsideProps {
 const NavigationAside: React.FC<NavigationAsideProps> = ({ isFirstVisit }) => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const currentUser = useSelector(selectCurrentUser)
   const isAuthenticated = !!localStorage.getItem('token')
+  const isAdmin = currentUser?.role === 'admin'
+
+  console.log('NavigationAside - currentUser:', currentUser)
+  console.log('NavigationAside - isAdmin:', isAdmin)
+  console.log('NavigationAside - role:', currentUser?.role)
 
   const handleLogout = () => {
     dispatch(clearAuth())
@@ -92,11 +99,14 @@ const NavigationAside: React.FC<NavigationAsideProps> = ({ isFirstVisit }) => {
           {isAuthenticated ? (
             <>
               <li>
-                <NavLink to="/profile" className={({ isActive }) => isActive ? styles.activeLink : ''}>
+                <NavLink 
+                  to={isAdmin ? "/admin" : "/profile"} 
+                  className={({ isActive }) => isActive ? styles.activeLink : ''}
+                >
                   <span className={styles.iconWrapper}>
-                    <LuUserRoundPen className={styles.icon} />
+                    {isAdmin ? <MdOutlineAdminPanelSettings className={styles.icon} /> : <LuUserRoundPen className={styles.icon} />}
                   </span>
-                  <span className={styles.linkText}>Profile</span>
+                  <span className={styles.linkText}>{isAdmin ? 'Dashboard' : 'Profile'}</span>
                 </NavLink>
               </li>
               <li>

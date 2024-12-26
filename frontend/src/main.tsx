@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { store } from './store/index'
+import { store } from './store/store.ts'
 import App from './App'
 import Home from './pages/Home/Home'
 import RegisterForm from './components/auth/RegisterForm'
@@ -12,6 +12,7 @@ import Portfolio from './pages/Portfolio/Portfolio'
 import About from './pages/About/About'
 import Contact from './pages/Contact/Contact'
 import Profile from './pages/Profile/Profile'
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
 import './styles/main.scss'
 
@@ -53,6 +54,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin',
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
           </ProtectedRoute>
         ),
       },
