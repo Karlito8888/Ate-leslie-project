@@ -2,32 +2,30 @@
 
 import nodemailer from 'nodemailer';
 
-interface EmailOptions {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}
-
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
+const config = {
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: +(process.env.EMAIL_PORT || 587),
+  user: process.env.EMAIL_USER,
+  pass: process.env.EMAIL_PASSWORD,
+  from: process.env.EMAIL_FROM || 'noreply@example.com',
+  name: process.env.EMAIL_FROM_NAME || 'No Reply'
 };
 
-export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  const transporter = createTransporter();
+const transporter = nodemailer.createTransport({
+  host: config.host,
+  port: config.port,
+  auth: {
+    user: config.user,
+    pass: config.pass,
+  },
+});
 
+export const send = async (to: string, subject: string, text: string, html?: string) => {
   await transporter.sendMail({
-    from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM}>`,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
+    from: `${config.name} <${config.from}>`,
+    to,
+    subject,
+    text,
+    html: html || text,
   });
 }; 

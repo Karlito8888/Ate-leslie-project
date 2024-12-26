@@ -1,69 +1,78 @@
 // backend/src/controllers/adminController.ts
 
-import { RequestHandler } from 'express';
 import { User } from '../models/User';
-import { sendResponse } from '../utils/responseHandler';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, HTTP_CODES, RESPONSE_STATUS } from '../utils/constants';
-import { findUser, createApiError } from '../utils/modelHelpers';
+import { Message } from '../models/Message';
+import { ok, error } from '../utils/responseHandler';
 
-// Fonctions utilitaires
-const getUserStats = async () => {
-  const [totalUsers, totalAdmins] = await Promise.all([
-    User.countDocuments({ role: 'user' }),
-    User.countDocuments({ role: 'admin' })
-  ]);
-  return { totalUsers, totalAdmins };
-};
-
-// Contrôleurs
-export const getDashboardStats: RequestHandler = async (req, res, next) => {
+export const stats = async (_: any, res: any) => {
   try {
-    const stats = await getUserStats();
-    
-    sendResponse(res, {
-      status: RESPONSE_STATUS.SUCCESS,
-      statusCode: HTTP_CODES.OK,
-      data: { stats }
-    });
-  } catch (error) {
-    sendResponse(res, {
-      status: RESPONSE_STATUS.ERROR,
-      statusCode: HTTP_CODES.INTERNAL_ERROR,
-      message: ERROR_MESSAGES.STATS_ERROR
-    });
+    const users = await User.countDocuments({ role: 'user' });
+    const admins = await User.countDocuments({ role: 'admin' });
+    ok(res, { stats: { users, admins } });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération des statistiques');
   }
 };
 
-export const getAllUsers: RequestHandler = async (req, res, next) => {
+export const users = async (_: any, res: any) => {
   try {
     const users = await User.find().select('-password');
-    
-    sendResponse(res, {
-      status: RESPONSE_STATUS.SUCCESS,
-      statusCode: HTTP_CODES.OK,
-      data: { users }
-    });
-  } catch (error) {
-    next(error);
+    ok(res, { users });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération des utilisateurs');
   }
 };
 
-export const deleteUser: RequestHandler = async (req, res, next) => {
+export const delUser = async (req: any, res: any) => {
   try {
-    const user = await findUser(req.params.id);
-    
-    if (user.role === 'admin') {
-      throw createApiError(HTTP_CODES.FORBIDDEN, ERROR_MESSAGES.CANNOT_DELETE_ADMIN);
-    }
+    const user = await User.findById(req.params.id);
+    if (!user) return error(res, 404, 'Utilisateur non trouvé');
+    if (user.role === 'admin') return error(res, 403, 'Impossible de supprimer un administrateur');
 
-    await User.findByIdAndDelete(req.params.id);
-    
-    sendResponse(res, {
-      status: RESPONSE_STATUS.SUCCESS,
-      statusCode: HTTP_CODES.OK,
-      message: SUCCESS_MESSAGES.USER_DELETED
-    });
-  } catch (error) {
-    next(error);
+    await user.deleteOne();
+    ok(res, {}, 'Utilisateur supprimé avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la suppression de l\'utilisateur');
+  }
+};
+
+export const msgs = async (_: any, res: any) => {
+  try {
+    const messages = await Message.find()
+      .populate('assignedTo', 'username')
+      .sort('-createdAt');
+    ok(res, { messages });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération des messages');
+  }
+};
+
+export const assign = async (req: any, res: any) => {
+  try {
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return error(res, 404, 'Message non trouvé');
+
+    const admin = await User.findById(req.body.admin);
+    if (!admin || admin.role !== 'admin') return error(res, 403, 'Administrateur invalide');
+
+    msg.assignedTo = admin._id;
+    msg.status = 'assigned';
+    await msg.save();
+    ok(res, { message: msg }, 'Message assigné avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de l\'assignation du message');
+  }
+};
+
+export const status = async (req: any, res: any) => {
+  try {
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return error(res, 404, 'Message non trouvé');
+
+    msg.status = req.body.status;
+    await msg.save();
+    ok(res, { message: msg }, 'Statut mis à jour avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la mise à jour du statut');
   }
 }; 

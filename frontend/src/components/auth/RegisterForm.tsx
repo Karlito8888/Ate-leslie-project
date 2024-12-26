@@ -6,23 +6,13 @@ import { setUser } from '../../store/slices/authSlice'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './RegisterForm.module.scss'
 
-// Constantes de validation
-const VALIDATION_RULES = {
-  USERNAME: {
-    MIN_LENGTH: 3,
-    MAX_LENGTH: 50
-  },
-  PASSWORD: {
-    MIN_LENGTH: 8,
-    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  }
+const RULES = {
+  name: { min: 3, max: 50 },
+  pass: { min: 6 }
 }
 
-// Regex pour la validation
-const REGEX = {
-  EMAIL: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/,
-  PHONE: /^(\+\d{1,3}[- ]?)?\d{10}$/
-}
+const EMAIL = /^[^@]+@[^@]+\.[a-z]{2,}$/i
+const PHONE = /^\+?[\d\s-]{10,}$/
 
 interface FormData {
   username: string
@@ -63,39 +53,32 @@ const RegisterForm: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {}
     
-    // Validation du nom d'utilisateur
     if (!formData.username.trim()) {
       errors.username = 'Username is required'
     } else if (
-      formData.username.length < VALIDATION_RULES.USERNAME.MIN_LENGTH ||
-      formData.username.length > VALIDATION_RULES.USERNAME.MAX_LENGTH
+      formData.username.length < RULES.name.min ||
+      formData.username.length > RULES.name.max
     ) {
-      errors.username = `Username must be between ${VALIDATION_RULES.USERNAME.MIN_LENGTH} and ${VALIDATION_RULES.USERNAME.MAX_LENGTH} characters`
+      errors.username = `Username must be between ${RULES.name.min} and ${RULES.name.max} characters`
     }
     
-    // Validation de l'email
     if (!formData.email.trim()) {
       errors.email = 'Email is required'
-    } else if (!REGEX.EMAIL.test(formData.email)) {
+    } else if (!EMAIL.test(formData.email)) {
       errors.email = 'Please provide a valid email address'
     }
     
-    // Validation du mot de passe
     if (!formData.password) {
       errors.password = 'Password is required'
-    } else if (formData.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
-      errors.password = `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`
-    } else if (!VALIDATION_RULES.PASSWORD.PATTERN.test(formData.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
+    } else if (formData.password.length < RULES.pass.min) {
+      errors.password = `Password must be at least ${RULES.pass.min} characters`
     }
     
-    // Validation de la confirmation du mot de passe
     if (formData.password !== formData.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match'
     }
 
-    // Validation du numéro de téléphone (optionnel)
-    if (formData.phoneNumber && !REGEX.PHONE.test(formData.phoneNumber)) {
+    if (formData.phoneNumber && !PHONE.test(formData.phoneNumber)) {
       errors.phoneNumber = 'Please provide a valid phone number'
     }
 

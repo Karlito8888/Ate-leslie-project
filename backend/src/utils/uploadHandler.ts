@@ -4,58 +4,57 @@ import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
 import { createApiError } from './modelHelpers';
-import { HTTP_CODES, ERROR_MESSAGES } from './constants';
+import { MSG } from './constants';
 
-// Storage configuration
-const storage = multer.memoryStorage();
-
-// File filter
-const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(createApiError(HTTP_CODES.BAD_REQUEST, ERROR_MESSAGES.INVALID_FILE_TYPE));
-  }
+const config = {
+  maxSize: 5 * 1024 * 1024, // 5MB
+  maxFiles: 5,
+  width: 800,
+  height: 600,
+  quality: 90,
+  uploadDir: path.join(__dirname, '../../uploads')
 };
 
-// Multer configuration
+const storage = multer.memoryStorage();
+
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (!file.mimetype.startsWith('image/')) {
+    return cb(createApiError(400, MSG.bad_data));
+  }
+  cb(null, true);
+};
+
 export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per file
-    files: 5 // Maximum 5 files
+    fileSize: config.maxSize,
+    files: config.maxFiles
   }
 });
 
-// Process single image
-export const processImage = async (file: Express.Multer.File): Promise<string> => {
-  const filename = `event-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
-  const uploadPath = path.join(__dirname, '../../uploads');
-
-  // Create uploads directory if it doesn't exist
-  if (!fs.existsSync(uploadPath)) {
-    fs.mkdirSync(uploadPath, { recursive: true });
+const ensureUploadDir = () => {
+  if (!fs.existsSync(config.uploadDir)) {
+    fs.mkdirSync(config.uploadDir, { recursive: true });
   }
+};
 
-  // Process and save image
+const generateFilename = (originalname: string) => 
+  `img-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(originalname)}`;
+
+const processOneImage = async (file: Express.Multer.File): Promise<string> => {
+  ensureUploadDir();
+  const filename = generateFilename(file.originalname);
+
   await sharp(file.buffer)
-    .resize(800, 600, { fit: 'cover' })
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(path.join(uploadPath, filename));
+    .resize(config.width, config.height, { fit: 'cover' })
+    .jpeg({ quality: config.quality })
+    .toFile(path.join(config.uploadDir, filename));
 
   return filename;
 };
 
-// Process multiple images
-export const processImages = async (files: Express.Multer.File[]): Promise<string[]> => {
-  const filenames: string[] = [];
-  
-  for (const file of files) {
-    const filename = await processImage(file);
-    filenames.push(filename);
-  }
+export const processImage = processOneImage;
 
-  return filenames;
-}; 
+export const processImages = (files: Express.Multer.File[]): Promise<string[]> => 
+  Promise.all(files.map(processOneImage)); 

@@ -6,6 +6,12 @@ import { setUser } from '../../store/slices/authSlice'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './Login.module.scss'
 
+const RULES = {
+  pass: { min: 6 }
+}
+
+const EMAIL = /^[^@]+@[^@]+\.[a-z]{2,}$/i
+
 interface FormData {
   email: string
   password: string
@@ -14,14 +20,6 @@ interface FormData {
 interface ValidationErrors {
   email?: string
   password?: string
-}
-
-// Constantes de validation
-const VALIDATION_RULES = {
-  PASSWORD: {
-    MIN_LENGTH: 8,
-    PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-  }
 }
 
 const Login: React.FC = () => {
@@ -42,16 +40,14 @@ const Login: React.FC = () => {
     
     if (!formData.email.trim()) {
       errors.email = 'Email is required'
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!EMAIL.test(formData.email)) {
       errors.email = 'Email is invalid'
     }
     
     if (!formData.password) {
       errors.password = 'Password is required'
-    } else if (formData.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
-      errors.password = `Password must be at least ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} characters`
-    } else if (!VALIDATION_RULES.PASSWORD.PATTERN.test(formData.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
+    } else if (formData.password.length < RULES.pass.min) {
+      errors.password = `Password must be at least ${RULES.pass.min} characters`
     }
 
     setValidationErrors(errors)
@@ -77,13 +73,18 @@ const Login: React.FC = () => {
         password: formData.password
       }).unwrap()
       
-      // console.log('Login response:', response)
-
       if (response.token) {
+        // Stocker le token et les données utilisateur
         localStorage.setItem('token', response.token)
+        localStorage.setItem('userData', JSON.stringify(response.data.user))
         dispatch(setUser(response.data.user))
-        // console.log('Token stored and user state updated:', response)
-        navigate('/')
+        
+        // Redirection basée sur le rôle
+        if (response.data.user.role === 'admin') {
+          navigate('/admin')
+        } else {
+          navigate('/profile')
+        }
       } else {
         console.error('No token in response:', response)
       }

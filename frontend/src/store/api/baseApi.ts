@@ -4,7 +4,7 @@ import { RootState } from '../store'
 export const baseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:5000'
 
 // API Types
-export type TagTypes = 'Profile' | 'Users' | 'AdminStats'
+export type TagTypes = 'Profile' | 'Users' | 'AdminStats' | 'Messages' | 'Auth'
 
 export interface ApiError {
   status: number
@@ -23,7 +23,7 @@ export interface ApiResponse<T> {
 // Base API configuration
 export const api = createApi({
   reducerPath: 'api',
-  tagTypes: ['Profile', 'Users', 'AdminStats'] as const,
+  tagTypes: ['Profile', 'Users', 'AdminStats', 'Messages', 'Auth'] as const,
   baseQuery: fetchBaseQuery({ 
     baseUrl,
     prepareHeaders: (headers, { getState }) => {

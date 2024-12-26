@@ -4,12 +4,15 @@ import type { EndpointBuilder } from '@reduxjs/toolkit/query/react'
 import type { FetchBaseQueryMeta, FetchBaseQueryError, FetchArgs } from '@reduxjs/toolkit/query'
 import type { BaseQueryFn } from '@reduxjs/toolkit/query'
 
+type UserRole = "user" | "admin";
+
 interface UserData {
   username: string
   email: string
   password: string
-  phoneNumber?: string
-  newsletter?: boolean
+  mobileNumber?: string
+  landlineNumber?: string
+  newsletterSubscribed?: boolean
 }
 
 interface Credentials {
@@ -20,7 +23,9 @@ interface Credentials {
 interface ProfileData {
   username?: string
   email?: string
-  phoneNumber?: string
+  mobileNumber?: string
+  landlineNumber?: string
+  newsletterSubscribed?: boolean
 }
 
 interface PasswordReset {
@@ -33,15 +38,19 @@ interface PasswordChange {
   newPassword: string
 }
 
+interface User {
+  id: string
+  username: string
+  email: string
+  role: UserRole
+  mobileNumber?: string
+  landlineNumber?: string
+  newsletterSubscribed: boolean
+}
+
 interface LoginResponse {
   token: string
-  user: {
-    id: string
-    username: string
-    email: string
-    role: string
-    phoneNumber?: string
-  }
+  user: User
 }
 
 type BuilderType = EndpointBuilder<

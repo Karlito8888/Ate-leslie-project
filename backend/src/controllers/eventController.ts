@@ -1,291 +1,90 @@
-import { Request, Response, NextFunction } from "express";
-import { Event, IEvent } from "../models/Event";
-import { Review } from "../models/Review";
-import {
-  HTTP_CODES,
-  ERROR_MESSAGES,
-  RESPONSE_STATUS,
-  SUCCESS_MESSAGES,
-} from "../utils/constants";
-import { createApiError, findEvent } from "../utils/modelHelpers";
-import { processImage, processImages } from "../utils/uploadHandler";
-import { Types } from "mongoose";
-import path from "path";
-import fs from "fs";
-import { UserRole } from '../models/User';
+import { Event } from '../models/Event';
+import { ok, error, created } from '../utils/responseHandler';
 
-// Types
-interface RequestWithUser extends Omit<Request, 'user'> {
-  user: {
-    id: string;
-    role: UserRole;
-  };
-}
-
-// Contrôleurs
-export const getAllEvents = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const add = async (req: any, res: any) => {
   try {
-    const events = await Event.find().populate("organizer", "username");
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: { events },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getEvent = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const event = await Event.findById(req.params.id)
-      .populate("organizer", "username")
-      .populate({
-        path: "reviews",
-        populate: { path: "user", select: "username" },
-      });
-
-    if (!event) {
-      throw createApiError(
-        HTTP_CODES.NOT_FOUND,
-        ERROR_MESSAGES.EVENT_NOT_FOUND
-      );
-    }
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: { event },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const createEvent = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const eventData = {
+    const event = await Event.create({
       ...req.body,
-      organizer: new Types.ObjectId(req.user.id)
-    };
-
-    if (req.files && Array.isArray(req.files)) {
-      eventData.images = await processImages(req.files);
-    }
-
-    const event = await Event.create(eventData);
-
-    res.status(HTTP_CODES.CREATED).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.EVENT_CREATED,
-      data: { event }
+      by: req.user._id
     });
-  } catch (error) {
-    next(error);
+    created(res, { event }, 'Événement créé avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la création de l\'événement');
   }
 };
 
-export const updateEvent = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const list = async (_: any, res: any) => {
   try {
-    const event = await Event.findById(req.params.id);
-    if (!event) {
-      throw createApiError(HTTP_CODES.NOT_FOUND, ERROR_MESSAGES.EVENT_NOT_FOUND);
-    }
-
-    if (event.organizer.toString() !== req.user.id) {
-      throw createApiError(HTTP_CODES.FORBIDDEN, ERROR_MESSAGES.NOT_AUTHORIZED);
-    }
-
-    const updateData = { ...req.body };
-
-    if (req.files && Array.isArray(req.files)) {
-      // Delete old images if they exist
-      if (event.images && event.images.length > 0) {
-        for (const image of event.images) {
-          const imagePath = path.join(__dirname, '../../uploads', image);
-          try {
-            await fs.promises.unlink(imagePath);
-          } catch (error) {
-            console.error('Error deleting old image:', error);
-          }
-        }
-      }
-      updateData.images = await processImages(req.files);
-    }
-
-    const updatedEvent = await Event.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    );
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.EVENT_UPDATED,
-      data: { event: updatedEvent }
-    });
-  } catch (error) {
-    next(error);
+    const events = await Event.find().populate('by', 'username');
+    ok(res, { events });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération des événements');
   }
 };
 
-export const deleteEvent = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const get = async (req: any, res: any) => {
   try {
-    const event = await Event.findById(req.params.id);
-    if (!event) {
-      throw createApiError(HTTP_CODES.NOT_FOUND, ERROR_MESSAGES.EVENT_NOT_FOUND);
-    }
+    const event = await Event.findById(req.params.id).populate('by', 'username');
+    if (!event) return error(res, 404, 'Événement non trouvé');
+    ok(res, { event });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération de l\'événement');
+  }
+};
 
-    if (event.organizer.toString() !== req.user.id) {
-      throw createApiError(HTTP_CODES.FORBIDDEN, ERROR_MESSAGES.NOT_AUTHORIZED);
-    }
+export const edit = async (req: any, res: any) => {
+  try {
+    const event: any = await Event.findById(req.params.id);
+    if (!event) return error(res, 404, 'Événement non trouvé');
+    if (event.by.toString() !== req.user._id) return error(res, 403, 'Vous n\'êtes pas l\'organisateur de cet événement');
 
-    // Delete associated images
-    if (event.images && event.images.length > 0) {
-      for (const image of event.images) {
-        const imagePath = path.join(__dirname, '../../uploads', image);
-        try {
-          await fs.promises.unlink(imagePath);
-        } catch (error) {
-          console.error('Error deleting image:', error);
-        }
-      }
-    }
+    Object.assign(event, req.body);
+    await event.save();
+    ok(res, { event }, 'Événement mis à jour avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la mise à jour de l\'événement');
+  }
+};
+
+export const del = async (req: any, res: any) => {
+  try {
+    const event: any = await Event.findById(req.params.id);
+    if (!event) return error(res, 404, 'Événement non trouvé');
+    if (event.by.toString() !== req.user._id) return error(res, 403, 'Vous n\'êtes pas l\'organisateur de cet événement');
 
     await event.deleteOne();
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.EVENT_DELETED
-    });
-  } catch (error) {
-    next(error);
+    ok(res, {}, 'Événement supprimé avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la suppression de l\'événement');
   }
 };
 
-export const participateInEvent = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-) => {
+export const join = async (req: any, res: any) => {
   try {
-    const event = await findEvent(req.params.id);
-    const userId = new Types.ObjectId(req.user.id);
-
-    if (event.participants.includes(userId)) {
-      throw createApiError(
-        HTTP_CODES.BAD_REQUEST,
-        ERROR_MESSAGES.ALREADY_PARTICIPATING
-      );
-    }
-
-    if (
-      event.maxParticipants &&
-      event.participants.length >= event.maxParticipants
-    ) {
-      throw createApiError(HTTP_CODES.BAD_REQUEST, ERROR_MESSAGES.EVENT_FULL);
-    }
-
-    event.participants.push(userId);
+    const event = await Event.findById(req.params.id);
+    if (!event) return error(res, 404, 'Événement non trouvé');
+    if (event.users.includes(req.user._id)) return error(res, 400, 'Vous participez déjà à cet événement');
+    
+    event.users.push(req.user._id);
     await event.save();
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.EVENT_PARTICIPATION,
-    });
-  } catch (error) {
-    next(error);
+    ok(res, { event }, 'Inscription à l\'événement réussie');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de l\'inscription à l\'événement');
   }
 };
 
-export const cancelParticipation = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-) => {
+export const leave = async (req: any, res: any) => {
   try {
-    const event = await findEvent(req.params.id);
-    const userId = new Types.ObjectId(req.user.id);
-
-    const participantIndex = event.participants.findIndex((id) =>
-      id.equals(userId)
-    );
-    if (participantIndex === -1) {
-      throw createApiError(
-        HTTP_CODES.BAD_REQUEST,
-        ERROR_MESSAGES.NOT_PARTICIPATING
-      );
-    }
-
-    event.participants.splice(participantIndex, 1);
+    const event = await Event.findById(req.params.id);
+    if (!event) return error(res, 404, 'Événement non trouvé');
+    
+    const i = event.users.indexOf(req.user._id);
+    if (i === -1) return error(res, 400, 'Vous ne participez pas à cet événement');
+    
+    event.users.splice(i, 1);
     await event.save();
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.EVENT_PARTICIPATION_CANCELLED,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const createReview = async (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const event = await findEvent(req.params.id);
-    const userId = new Types.ObjectId(req.user.id);
-
-    if (!event.participants.some(id => id.equals(userId))) {
-      throw createApiError(HTTP_CODES.FORBIDDEN, ERROR_MESSAGES.MUST_PARTICIPATE);
-    }
-
-    const existingReview = await Review.findOne({
-      event: new Types.ObjectId(req.params.id),
-      user: userId
-    });
-
-    if (existingReview) {
-      throw createApiError(HTTP_CODES.BAD_REQUEST, ERROR_MESSAGES.ALREADY_REVIEWED);
-    }
-
-    const review = await Review.create({
-      event: new Types.ObjectId(req.params.id),
-      user: userId,
-      rating: req.body.rating,
-      comment: req.body.comment
-    });
-
-    event.reviews.push(review._id as Types.ObjectId);
-    await event.save();
-
-    res.status(HTTP_CODES.CREATED).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.REVIEW_CREATED,
-      data: { review }
-    });
-  } catch (error) {
-    next(error);
+    ok(res, { event }, 'Désinscription de l\'événement réussie');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la désinscription de l\'événement');
   }
 };

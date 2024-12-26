@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
-import { User, IUser } from '../models/User';
+import { User } from '../models/User';
 import { Event } from '../models/Event';
-import { ERROR_MESSAGES } from './constants';
+import { MSG } from './constants';
 
 export interface UserResponse {
   id: string;
@@ -44,7 +44,7 @@ export const createApiError = (status: number, message: string): ApiError => {
   return new ApiError(status, message);
 };
 
-export const formatUserResponse = (user: IUser): UserResponse => ({
+export const formatUserResponse = (user: any): UserResponse => ({
   id: user._id.toString(),
   username: user.username,
   email: user.email,
@@ -60,7 +60,7 @@ export const formatUserResponse = (user: IUser): UserResponse => ({
 export const findUser = async (id: string) => {
   const user = await User.findById(id);
   if (!user) {
-    throw createApiError(404, ERROR_MESSAGES.USER_NOT_FOUND);
+    throw createApiError(404, MSG.no_user);
   }
   return user;
 };
@@ -68,13 +68,13 @@ export const findUser = async (id: string) => {
 export const findEvent = async (id: string) => {
   const event = await Event.findById(id);
   if (!event) {
-    throw createApiError(404, ERROR_MESSAGES.EVENT_NOT_FOUND);
+    throw createApiError(404, MSG.not_found);
   }
   return event;
 };
 
 export const checkEventOwnership = (event: { organizer: Types.ObjectId }, userId: string) => {
   if (event.organizer.toString() !== userId) {
-    throw createApiError(403, ERROR_MESSAGES.NOT_AUTHORIZED);
+    throw createApiError(403, MSG.no_access);
   }
 }; 

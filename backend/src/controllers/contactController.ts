@@ -1,83 +1,40 @@
-import { Request, Response, NextFunction } from 'express';
 import { Contact } from '../models/Contact';
-import { HTTP_CODES, RESPONSE_STATUS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
-import { createApiError } from '../utils/modelHelpers';
-import { sendEmail } from '../utils/email';
+import { send } from '../utils/email';
+import { ok, error, created } from '../utils/responseHandler';
 
-// Create a new contact message
-export const createContact = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const add = async (req: any, res: any) => {
   try {
-    const contact = await Contact.create(req.body);
-
-    // Send confirmation email to user
-    await sendEmail({
-      to: req.body.email,
-      subject: 'Message Received - Ate Leslie Events',
-      text: `Hello ${req.body.name},\n\nWe have received your message. Our team will get back to you as soon as possible.\n\nBest regards,\nThe Ate Leslie Team`,
-      html: `
-        <h2>Message Received</h2>
-        <p>Hello ${req.body.name},</p>
-        <p>We have received your message. Our team will get back to you as soon as possible.</p>
-        <p>Best regards,<br>The Ate Leslie Team</p>
-      `
-    });
-
-    res.status(HTTP_CODES.CREATED).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.CONTACT_CREATED,
-      data: { contact }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Get all messages (admin only)
-export const getAllContacts = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      data: { contacts }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Update message status (admin only)
-export const updateContactStatus = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { status } = req.body;
-    const contact = await Contact.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true, runValidators: true }
+    const msg = await Contact.create(req.body);
+    
+    const text = `Bonjour ${req.body.name}, message bien reçu.`;
+    await send(
+      req.body.email,
+      'Message reçu',
+      text,
+      `<p>${text}</p>`
     );
 
-    if (!contact) {
-      throw createApiError(HTTP_CODES.NOT_FOUND, ERROR_MESSAGES.CONTACT_NOT_FOUND);
-    }
+    created(res, { message: msg }, 'Message envoyé avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de l\'envoi du message');
+  }
+};
 
-    res.status(HTTP_CODES.OK).json({
-      status: RESPONSE_STATUS.SUCCESS,
-      message: SUCCESS_MESSAGES.CONTACT_UPDATED,
-      data: { contact }
-    });
-  } catch (error) {
-    next(error);
+export const list = async (_: any, res: any) => {
+  try {
+    const messages = await Contact.find().sort('-createdAt');
+    ok(res, { messages });
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la récupération des messages');
+  }
+};
+
+export const edit = async (req: any, res: any) => {
+  try {
+    const msg = await Contact.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!msg) return error(res, 404, 'Message non trouvé');
+    ok(res, { message: msg }, 'Message mis à jour avec succès');
+  } catch (e: any) {
+    error(res, 400, e.message || 'Erreur lors de la mise à jour du message');
   }
 }; 

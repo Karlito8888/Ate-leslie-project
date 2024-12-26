@@ -1,44 +1,36 @@
 // backend/src/utils/emailTemplates.ts
 
-export const getPasswordResetTemplate = (
-  username: string,
-  resetUrl: string
-) => {
+const style = {
+  btn: 'background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;display:inline-block',
+  p: 'margin:15px 0',
+  body: 'font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto'
+};
+
+export const resetPassword = (name: string, url: string) => {
   const text = `
-Hello ${username},
+Bonjour ${name},
 
-You have requested a password reset.
-Click the link below to set a new password:
+Vous avez demandé une réinitialisation de votre mot de passe.
+Cliquez sur ce lien pour définir un nouveau mot de passe : ${url}
 
-${resetUrl}
+Si vous n'avez pas fait cette demande, ignorez cet email.
+Le lien expirera dans 30 minutes.
 
-If you did not request this reset, please ignore this email.
-The link will expire in 30 minutes.
-
-Best regards,
-The Ate Leslie Team
-`;
+Cordialement,
+L'équipe Ate Leslie`;
 
   const html = `
-<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-  <h2>Password Reset</h2>
-  <p>Hello ${username},</p>
-  <p>You have requested a password reset.</p>
-  <p>Click the link below to set a new password:</p>
-  <p>
-    <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-      Reset my password
-    </a>
+<div style="${style.body}">
+  <h2>Réinitialisation du mot de passe</h2>
+  <p style="${style.p}">Bonjour ${name},</p>
+  <p style="${style.p}">Vous avez demandé une réinitialisation de votre mot de passe.</p>
+  <p style="${style.p}">
+    <a href="${url}" style="${style.btn}">Réinitialiser mon mot de passe</a>
   </p>
-  <p>If you did not request this reset, please ignore this email.</p>
-  <p>The link will expire in 30 minutes.</p>
-  <br>
-  <p>Best regards,<br>The Ate Leslie Team</p>
-</body>
-</html>
-`;
+  <p style="${style.p}">Si vous n'avez pas fait cette demande, ignorez cet email.</p>
+  <p style="${style.p}">Le lien expirera dans 30 minutes.</p>
+  <p style="${style.p}">Cordialement,<br>L'équipe Ate Leslie</p>
+</div>`;
 
   return { text, html };
 };

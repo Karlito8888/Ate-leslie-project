@@ -5,9 +5,10 @@ const schema = new Schema({
   email: String,
   subject: String,
   message: String,
-  status: { type: String, default: 'unread' }
+  assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+  status: { type: String, default: 'new' }
 }, { 
   timestamps: true 
 });
 
-export const Contact = model('Contact', schema); 
+export const Message = model('Message', schema); 
