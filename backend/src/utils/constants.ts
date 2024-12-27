@@ -1,5 +1,3 @@
-export const CATS = ['concert', 'festival', 'theater', 'sport', 'other'];
-
 export const RULES = {
   name: { min: 3, max: 50 },
   pass: { min: 6 },
@@ -22,11 +20,6 @@ export const MSG = {
   bad_data: 'Bad data',
   not_found: 'Not found',
   no_access: 'Not yours',
-  
-  // Events
-  in_event: 'Already in',
-  not_in: 'Not in',
-  full: 'Full',
   
   // Generic
   error: 'Error',

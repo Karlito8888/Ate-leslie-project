@@ -1,90 +1,94 @@
-import { Event } from '../models/Event';
-import { ok, error, created } from '../utils/responseHandler';
+import { Types } from 'mongoose';
+import { Event, IEvent } from '../models/Event';
+import { AuthRequest } from '../types/express';
+import { Response } from 'express';
 
-export const add = async (req: any, res: any) => {
+// Lister les événements
+export const list = async (req: AuthRequest, res: Response) => {
+  try {
+    const query = buildQuery(req.query);
+    const events = await Event.find(query).populate('by', 'username');
+    res.json({ success: true, data: { events } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+};
+
+// Créer un événement
+export const create = async (req: AuthRequest, res: Response) => {
   try {
     const event = await Event.create({
       ...req.body,
-      by: req.user._id
+      by: new Types.ObjectId(req.user.id)
     });
-    created(res, { event }, 'Événement créé avec succès');
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la création de l\'événement');
+
+    res.status(201).json({ success: true, data: { event } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
 };
 
-export const list = async (_: any, res: any) => {
+// Mettre à jour un événement
+export const update = async (req: AuthRequest, res: Response) => {
   try {
-    const events = await Event.find().populate('by', 'username');
-    ok(res, { events });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la récupération des événements');
+    const event = await Event.findOneAndUpdate(
+      { _id: req.params.id, by: new Types.ObjectId(req.user.id) },
+      req.body,
+      { new: true }
+    ).lean() as IEvent | null;
+
+    if (!event) {
+      res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      return;
+    }
+
+    res.json({ success: true, data: { event } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
 };
 
-export const get = async (req: any, res: any) => {
+// Supprimer un événement
+export const remove = async (req: AuthRequest, res: Response) => {
   try {
-    const event = await Event.findById(req.params.id).populate('by', 'username');
-    if (!event) return error(res, 404, 'Événement non trouvé');
-    ok(res, { event });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la récupération de l\'événement');
+    const event = await Event.findOneAndDelete({
+      _id: req.params.id,
+      by: new Types.ObjectId(req.user.id)
+    }).lean() as IEvent | null;
+
+    if (!event) {
+      res.status(404).json({ success: false, error: 'Événement non trouvé' });
+      return;
+    }
+
+    res.json({ success: true, data: { event } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
   }
 };
 
-export const edit = async (req: any, res: any) => {
-  try {
-    const event: any = await Event.findById(req.params.id);
-    if (!event) return error(res, 404, 'Événement non trouvé');
-    if (event.by.toString() !== req.user._id) return error(res, 403, 'Vous n\'êtes pas l\'organisateur de cet événement');
-
-    Object.assign(event, req.body);
-    await event.save();
-    ok(res, { event }, 'Événement mis à jour avec succès');
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la mise à jour de l\'événement');
+// Fonction utilitaire pour construire la requête
+const buildQuery = (params: any) => {
+  const query: any = {};
+  
+  if (params.category) {
+    query.category = params.category;
   }
-};
-
-export const del = async (req: any, res: any) => {
-  try {
-    const event: any = await Event.findById(req.params.id);
-    if (!event) return error(res, 404, 'Événement non trouvé');
-    if (event.by.toString() !== req.user._id) return error(res, 403, 'Vous n\'êtes pas l\'organisateur de cet événement');
-
-    await event.deleteOne();
-    ok(res, {}, 'Événement supprimé avec succès');
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la suppression de l\'événement');
+  
+  if (params.date) {
+    const date = new Date(params.date);
+    query.date = {
+      $gte: date,
+      $lt: new Date(date.getTime() + 24 * 60 * 60 * 1000)
+    };
   }
-};
-
-export const join = async (req: any, res: any) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return error(res, 404, 'Événement non trouvé');
-    if (event.users.includes(req.user._id)) return error(res, 400, 'Vous participez déjà à cet événement');
-    
-    event.users.push(req.user._id);
-    await event.save();
-    ok(res, { event }, 'Inscription à l\'événement réussie');
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de l\'inscription à l\'événement');
+  
+  if (params.search) {
+    query.$or = [
+      { title: new RegExp(params.search, 'i') },
+      { desc: new RegExp(params.search, 'i') }
+    ];
   }
-};
 
-export const leave = async (req: any, res: any) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return error(res, 404, 'Événement non trouvé');
-    
-    const i = event.users.indexOf(req.user._id);
-    if (i === -1) return error(res, 400, 'Vous ne participez pas à cet événement');
-    
-    event.users.splice(i, 1);
-    await event.save();
-    ok(res, { event }, 'Désinscription de l\'événement réussie');
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la désinscription de l\'événement');
-  }
+  return query;
 };

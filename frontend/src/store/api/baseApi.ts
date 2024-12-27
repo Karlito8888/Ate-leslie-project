@@ -1,10 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { RootState } from '../store'
 
-export const baseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:5000'
+export const baseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'
 
 // API Types
-export type TagTypes = 'Profile' | 'Users' | 'AdminStats' | 'Messages' | 'Auth'
+export type TagTypes = 'Profile' | 'Users' | 'Events' | 'Reviews' | 'Messages' | 'Auth' | 'Contact'
 
 export interface ApiError {
   status: number
@@ -14,29 +14,27 @@ export interface ApiError {
 }
 
 export interface ApiResponse<T> {
-  status: 'success' | 'error'
+  success: boolean
   data: T
-  token?: string
   message?: string
 }
 
 // Base API configuration
 export const api = createApi({
   reducerPath: 'api',
-  tagTypes: ['Profile', 'Users', 'AdminStats', 'Messages', 'Auth'] as const,
+  tagTypes: ['Profile', 'Users', 'Events', 'Reviews', 'Messages', 'Auth', 'Contact'] as const,
   baseQuery: fetchBaseQuery({ 
     baseUrl,
     prepareHeaders: (headers, { getState }) => {
       // Try to get token from Redux store first
       const token = (getState() as RootState).auth.token
-      // Fallback to localStorage if not in store
-      const localToken = !token ? localStorage.getItem('token') : token
       
-      if (localToken) {
-        headers.set('authorization', `Bearer ${localToken}`)
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`)
       }
       return headers
     },
+    credentials: 'include', // Pour gérer les cookies
   }),
   endpoints: () => ({}),
   keepUnusedDataFor: 5 * 60, // 5 minutes

@@ -1,98 +1,216 @@
 // backend/src/controllers/authController.ts
 
+import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import { generateReset } from '../utils/auth';
+import { hash, check, generateToken, verifyToken } from '../utils/auth';
 import { send } from '../utils/email';
-import { resetPassword } from '../utils/emailTemplates';
-import { ok, error, created } from '../utils/responseHandler';
+import { ok, error } from '../utils/responseHandler';
+import { Types } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import { ApiError } from '../utils/ApiError';
 
-export const register = async (req: any, res: any) => {
+interface AuthRequest extends Request {
+  user?: {
+    _id: Types.ObjectId;
+    id: string;
+    role: string;
+    username?: string;
+    email?: string;
+  };
+}
+
+/**
+ * Inscription d'un nouvel utilisateur
+ */
+export const register = async (req: Request, res: Response): Promise<void> => {
+  const { username, email, password, newsletterSubscribed = true } = req.body;
+
+  // Validation des champs
+  if (!username || !email || !password) {
+    throw new ApiError('Tous les champs sont requis', 400);
+  }
+
+  if (username.length < 3) {
+    throw new ApiError('Le nom d\'utilisateur doit contenir au moins 3 caractères', 400);
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new ApiError('Format d\'email invalide', 400);
+  }
+
+  if (password.length < 6) {
+    throw new ApiError('Le mot de passe doit contenir au moins 6 caractères', 400);
+  }
+
+  // Vérifier si l'utilisateur existe déjà
+  const existingUser = await User.findOne({
+    $or: [{ email }, { username }]
+  });
+
+  if (existingUser) {
+    throw new ApiError('Cet email ou nom d\'utilisateur est déjà utilisé', 400);
+  }
+
+  // Créer le nouvel utilisateur
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await User.create({
+    username,
+    email,
+    password: hashedPassword,
+    newsletterSubscribed
+  });
+
+  // Générer le token
+  const token = generateToken(user);
+
+  // Retourner la réponse
+  res.status(201).json({
+    success: true,
+    data: {
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        newsletterSubscribed: user.newsletterSubscribed
+      },
+      token
+    }
+  });
+};
+
+/**
+ * Connexion d'un utilisateur
+ */
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const exists = await User.findOne({ email: req.body.email });
-    if (exists) return error(res, 400, 'Email déjà utilisé');
+    const { email, password } = req.body;
 
-    const hash = await bcrypt.hash(req.body.password, 8);
-    const user = await User.create({ ...req.body, password: hash });
-    
-    const token = jwt.sign({ id: user._id }, 'secret');
-    created(res, { token, user: { id: user._id, email: user.email } });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de l\'inscription');
+    // Vérifier les identifiants
+    const user = await User.findOne({ email });
+    if (!user || !(await check(password, user.password))) {
+      return next(new ApiError('Email ou mot de passe incorrect', 401));
+    }
+
+    // Générer le token
+    const token = generateToken(user);
+
+    // Retourner la réponse
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          newsletterSubscribed: user.newsletterSubscribed
+        },
+        token
+      }
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const login = async (req: any, res: any) => {
+/**
+ * Demande de réinitialisation de mot de passe
+ */
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user: any = await User.findOne({ email: req.body.email });
-    if (!user) return error(res, 400, 'Email invalide');
+    const { email } = req.body;
 
-    const isValid = await bcrypt.compare(req.body.password, user.password);
-    if (!isValid) return error(res, 400, 'Mot de passe invalide');
+    // Vérifier si l'utilisateur existe
+    const user = await User.findOne({ email });
+    if (!user) {
+      error(res, 404, 'Aucun compte associé à cet email');
+      return;
+    }
 
-    const token = jwt.sign({ id: user._id }, 'secret');
-    ok(res, { token, user: { id: user._id, email: user.email } });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la connexion');
-  }
-};
-
-export const me = async (req: any, res: any) => {
-  try {
-    const user = await User.findById(req.user._id);
-    ok(res, { user });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la récupération du profil');
-  }
-};
-
-export const edit = async (req: any, res: any) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.user._id, req.body, { new: true });
-    ok(res, { user });
-  } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la mise à jour du profil');
-  }
-};
-
-export const forgot = async (req: any, res: any) => {
-  try {
-    const user: any = await User.findOne({ email: req.body.email });
-    if (!user) return ok(res, {}, 'Si votre email existe, vous recevrez un lien de réinitialisation');
-
-    const { raw, hash } = generateReset();
-    user.resetToken = hash;
-    user.resetExpires = new Date(Date.now() + 30 * 60 * 1000);
+    // Générer le token de réinitialisation
+    const resetToken = generateToken(user._id);
+    user.resetToken = resetToken;
+    user.resetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
     await user.save();
 
-    const url = `${process.env.FRONTEND_URL}/reset-password/${raw}`;
-    const { text, html } = resetPassword(user.username || 'utilisateur', url);
-    await send(user.email, 'Réinitialisation du mot de passe', text, html);
+    // Envoyer l'email
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await send(
+      email,
+      'Réinitialisation de mot de passe',
+      `Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}`,
+      `<p>Cliquez sur ce lien pour réinitialiser votre mot de passe : <a href="${resetUrl}">${resetUrl}</a></p>`
+    );
 
-    ok(res, {}, 'Si votre email existe, vous recevrez un lien de réinitialisation');
+    ok(res, {}, 'Email de réinitialisation envoyé');
   } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de l\'envoi du mail de réinitialisation');
+    error(res, 500, e.message || 'Erreur lors de l\'envoi de l\'email');
   }
 };
 
-export const resetPass = async (req: any, res: any) => {
+/**
+ * Réinitialisation du mot de passe
+ */
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
-    const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
-    const user: any = await User.findOne({
-      resetToken: hash,
-      resetExpires: { $gt: Date.now() }
-    });
-    if (!user) return error(res, 400, 'Token invalide ou expiré');
+    const { token } = req.params;
+    const { password } = req.body;
 
-    user.password = await bcrypt.hash(req.body.password, 8);
+    // Vérifier le token
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch (e) {
+      error(res, 400, 'Token invalide ou expiré');
+      return;
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      error(res, 400, 'Utilisateur non trouvé');
+      return;
+    }
+
+    // Mettre à jour le mot de passe
+    user.password = await hash(password);
     user.resetToken = undefined;
     user.resetExpires = undefined;
     await user.save();
 
     ok(res, {}, 'Mot de passe réinitialisé avec succès');
   } catch (e: any) {
-    error(res, 400, e.message || 'Erreur lors de la réinitialisation du mot de passe');
+    error(res, 400, e.message || 'Token invalide ou expiré');
+  }
+};
+
+/**
+ * Changer le mot de passe
+ */
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user?._id;
+
+    if (!userId) {
+      error(res, 401, 'Non authentifié');
+      return;
+    }
+
+    // Vérifier l'ancien mot de passe
+    const user = await User.findById(userId);
+    if (!user || !(await check(currentPassword, user.password))) {
+      error(res, 401, 'Mot de passe actuel incorrect');
+      return;
+    }
+
+    // Mettre à jour le mot de passe
+    user.password = await hash(newPassword);
+    await user.save();
+
+    ok(res, {}, 'Mot de passe modifié avec succès');
+  } catch (e: any) {
+    error(res, 500, e.message || 'Erreur lors du changement de mot de passe');
   }
 };

@@ -1,23 +1,24 @@
 // backend/src/routes/eventRoutes.ts
 
 import { Router } from 'express';
-import { add, list, get, edit, del, join, leave } from '../controllers/eventController';
+import { list, create, update, remove } from '../controllers/eventController';
+import { AuthHandler } from '../types/express';
+import { validateEvent } from '../middleware/eventValidation';
 import { auth } from '../middleware/authMiddleware';
-import { validate } from '../middleware/eventValidation';
-import { upload } from '../utils/uploadHandler';
+import reviewRoutes from './reviewRoutes';
 
-const r = Router();
+const router = Router();
 
-// Public routes
-r.get('/', list);
-r.get('/:id', get);
+// Routes publiques
+router.get('/', list as AuthHandler);
 
-// Protected routes
-r.use(auth);
-r.post('/', upload.array('img', 5), validate, add);
-r.patch('/:id', upload.array('img', 5), validate, edit);
-r.delete('/:id', del);
-r.post('/:id/join', join);
-r.post('/:id/leave', leave);
+// Routes authentifiées
+router.use(auth);
+router.post('/', validateEvent, create as AuthHandler);
+router.put('/:id', validateEvent, update as AuthHandler);
+router.delete('/:id', remove as AuthHandler);
 
-export default r; 
+// Routes des reviews
+router.use('/:eventId/reviews', reviewRoutes);
+
+export default router; 

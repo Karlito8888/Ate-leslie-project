@@ -1,6 +1,4 @@
-import { Types } from 'mongoose';
 import { User } from '../models/User';
-import { Event } from '../models/Event';
 import { MSG } from './constants';
 
 export interface UserResponse {
@@ -63,18 +61,4 @@ export const findUser = async (id: string) => {
     throw createApiError(404, MSG.no_user);
   }
   return user;
-};
-
-export const findEvent = async (id: string) => {
-  const event = await Event.findById(id);
-  if (!event) {
-    throw createApiError(404, MSG.not_found);
-  }
-  return event;
-};
-
-export const checkEventOwnership = (event: { organizer: Types.ObjectId }, userId: string) => {
-  if (event.organizer.toString() !== userId) {
-    throw createApiError(403, MSG.no_access);
-  }
 }; 

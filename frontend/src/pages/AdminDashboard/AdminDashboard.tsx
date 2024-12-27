@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import { 
@@ -11,6 +11,8 @@ import {
 } from '../../store/api/adminApi';
 import { toast } from 'react-toastify';
 import styles from './AdminDashboard.module.scss';
+import MessageModal from '../../components/MessageModal/MessageModal';
+import NewMessageModal from '../../components/NewMessageModal/NewMessageModal';
 
 interface User {
   _id: string;
@@ -20,21 +22,56 @@ interface User {
   createdAt: string;
 }
 
+type MessageStatus = 'new' | 'assigned' | 'in_progress' | 'resolved';
+
+interface Reply {
+  admin: {
+    username: string;
+  };
+  content: string;
+  createdAt: string;
+}
+
 interface Message {
   _id: string;
   name: string;
   email: string;
   subject: string;
   message: string;
-  createdAt: string;
+  status: MessageStatus;
   assignedTo?: string;
-  status: 'new' | 'assigned' | 'in_progress' | 'resolved';
+  replies: Reply[];
+  createdAt: string;
+}
+
+interface ApiMessage extends Omit<Message, 'replies'> {
+  replies?: Reply[];
+}
+
+interface AdminMessage {
+  _id: string;
+  from: {
+    _id: string;
+    username: string;
+  };
+  to: {
+    _id: string;
+    username: string;
+  };
+  subject: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 const AdminDashboard: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [internalMessages, setInternalMessages] = useState<AdminMessage[]>([]);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [isLoadingInternalMessages, setIsLoadingInternalMessages] = useState(false);
   
   const { 
     data: statsData, 
@@ -80,7 +117,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleUpdateMessageStatus = async (messageId: string, status: Message['status']) => {
+  const handleUpdateMessageStatus = async (messageId: string, status: MessageStatus) => {
     try {
       await updateMessageStatus({ messageId, status }).unwrap();
       toast.success('Message status updated successfully');
@@ -89,6 +126,89 @@ const AdminDashboard: React.FC = () => {
       console.error('Status update error:', error);
     }
   };
+
+  const handleReply = async (messageId: string, content: string) => {
+    try {
+      const response = await fetch(`/api/admin/messages/${messageId}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ content })
+      });
+
+      if (!response.ok) throw new Error('Failed to send reply');
+      toast.success('Reply sent successfully');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to send reply');
+    }
+  };
+
+  const fetchInternalMessages = async () => {
+    setIsLoadingInternalMessages(true);
+    try {
+      const response = await fetch('/api/admin/internal/inbox', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      const data = await response.json();
+      setInternalMessages(data.messages);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to fetch internal messages');
+    } finally {
+      setIsLoadingInternalMessages(false);
+    }
+  };
+
+  const handleSendInternalMessage = async (to: string, subject: string, content: string) => {
+    try {
+      const response = await fetch('/api/admin/internal/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ to, subject, content })
+      });
+
+      if (!response.ok) throw new Error('Failed to send message');
+      
+      toast.success('Message sent successfully');
+      setShowNewMessageModal(false);
+      fetchInternalMessages();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to send message');
+    }
+  };
+
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const response = await fetch(`/api/admin/internal/messages/${messageId}/read`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to mark message as read');
+      fetchInternalMessages();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to mark message as read');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'internal') {
+      fetchInternalMessages();
+    }
+  }, [activeTab]);
 
   if (isLoadingStats || isLoadingUsers || isLoadingMessages) {
     return <div className={styles.loading}>Loading...</div>;
@@ -105,7 +225,12 @@ const AdminDashboard: React.FC = () => {
 
   const stats = statsData?.data?.stats || { totalUsers: 0, totalAdmins: 0 };
   const users = usersData?.data?.users || [];
-  const messages = messagesData?.data?.messages || [];
+  const apiMessages = (messagesData?.data?.messages || []) as ApiMessage[];
+  
+  const messages: Message[] = apiMessages.map(msg => ({
+    ...msg,
+    replies: msg.replies || []
+  }));
 
   const filteredUsers = users.filter((user: User) =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -116,6 +241,10 @@ const AdminDashboard: React.FC = () => {
     message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const admins = users.filter((u: User) => 
+    u.role === 'admin' && u._id !== user?.id
   );
 
   const renderOverviewTab = () => (
@@ -218,7 +347,7 @@ const AdminDashboard: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredMessages.map((message) => (
+            {filteredMessages.map((message: Message) => (
               <tr key={message._id}>
                 <td>{message.subject}</td>
                 <td>{message.name}</td>
@@ -226,7 +355,7 @@ const AdminDashboard: React.FC = () => {
                 <td>
                   <select
                     value={message.status}
-                    onChange={(e) => handleUpdateMessageStatus(message._id, e.target.value as Message['status'])}
+                    onChange={(e) => handleUpdateMessageStatus(message._id, e.target.value as MessageStatus)}
                     className={styles.statusSelect}
                   >
                     <option value="new">New</option>
@@ -247,10 +376,7 @@ const AdminDashboard: React.FC = () => {
                   )}
                   <button
                     className={`${styles.actionButton} ${styles.view}`}
-                    onClick={() => {
-                      // TODO: Implement message view modal
-                      toast.info('Message view feature coming soon');
-                    }}
+                    onClick={() => setSelectedMessage(message)}
                   >
                     View
                   </button>
@@ -261,6 +387,45 @@ const AdminDashboard: React.FC = () => {
         </table>
       ) : (
         <p className={styles.noResults}>No messages found</p>
+      )}
+    </section>
+  );
+
+  const renderInternalMessagesTab = () => (
+    <section className={styles.contentSection}>
+      <div className={styles.header}>
+        <h2>Internal Messages</h2>
+        <button 
+          className={styles.newMessageButton}
+          onClick={() => setShowNewMessageModal(true)}
+        >
+          New Message
+        </button>
+      </div>
+
+      {isLoadingInternalMessages ? (
+        <div className={styles.loading}>Loading messages...</div>
+      ) : internalMessages.length > 0 ? (
+        <div className={styles.messagesList}>
+          {internalMessages.map(message => (
+            <div 
+              key={message._id} 
+              className={`${styles.messageCard} ${!message.isRead ? styles.unread : ''}`}
+              onClick={() => handleMarkAsRead(message._id)}
+            >
+              <div className={styles.messageHeader}>
+                <span className={styles.from}>From: {message.from.username}</span>
+                <span className={styles.date}>
+                  {new Date(message.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <h3 className={styles.subject}>{message.subject}</h3>
+              <p className={styles.preview}>{message.content}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className={styles.noMessages}>No messages in your inbox</p>
       )}
     </section>
   );
@@ -299,6 +464,12 @@ const AdminDashboard: React.FC = () => {
           Messages
         </button>
         <button 
+          className={activeTab === 'internal' ? styles.active : ''} 
+          onClick={() => setActiveTab('internal')}
+        >
+          Internal Messages
+        </button>
+        <button 
           className={activeTab === 'settings' ? styles.active : ''} 
           onClick={() => setActiveTab('settings')}
         >
@@ -310,8 +481,25 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'overview' && renderOverviewTab()}
         {activeTab === 'users' && renderUsersTab()}
         {activeTab === 'messages' && renderMessagesTab()}
+        {activeTab === 'internal' && renderInternalMessagesTab()}
         {activeTab === 'settings' && renderSettingsTab()}
       </main>
+
+      {selectedMessage && (
+        <MessageModal
+          message={selectedMessage}
+          onClose={() => setSelectedMessage(null)}
+          onReply={handleReply}
+        />
+      )}
+
+      {showNewMessageModal && (
+        <NewMessageModal
+          admins={admins}
+          onClose={() => setShowNewMessageModal(false)}
+          onSend={handleSendInternalMessage}
+        />
+      )}
     </div>
   );
 };

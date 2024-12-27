@@ -1,14 +1,18 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { add, list, edit } from '../controllers/contactController';
 import { auth, admin } from '../middleware/authMiddleware';
 import { validate } from '../middleware/contactValidation';
 
-const r = Router();
+const router = Router();
 
-r.post('/', validate, add);
+// Route publique pour envoyer un message
+router.post('/', validate as RequestHandler, add as RequestHandler);
 
-r.use(auth, admin);
-r.get('/', list);
-r.patch('/:id', edit);
+// Routes admin
+router.use(auth as RequestHandler);
+router.use(admin as RequestHandler);
 
-export default r; 
+router.get('/', list as RequestHandler);
+router.patch('/:id', edit as RequestHandler);
+
+export default router; 

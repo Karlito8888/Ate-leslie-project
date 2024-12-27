@@ -1,20 +1,7 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { User, UserInfo } from '../../types/user';
+import { api } from './baseApi';
 
-export const userApi = createApi({
-  reducerPath: 'userApi',
-  baseQuery: fetchBaseQuery({ 
-    baseUrl: 'http://localhost:5000/api',
-    credentials: 'include',
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
-  tagTypes: ['User'],
+export const userApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getUserProfile: builder.query<User, void>({
       query: () => ({
@@ -32,7 +19,7 @@ export const userApi = createApi({
         }
         return user;
       },
-      providesTags: ['User'],
+      providesTags: ['Profile'],
     }),
     updateUserProfile: builder.mutation<User, UserInfo>({
       query: (userData) => ({
@@ -43,7 +30,7 @@ export const userApi = createApi({
           birthDate: userData.birthDate ? new Date(userData.birthDate.split('/').reverse().join('-')) : undefined
         },
       }),
-      invalidatesTags: ['User'],
+      invalidatesTags: ['Profile'],
     }),
   }),
 });

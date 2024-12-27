@@ -1,19 +1,15 @@
 // backend/src/routes/authRoutes.ts
 
 import { Router } from 'express';
-import { register, login, me, edit } from '../controllers/authController';
-import { auth } from '../middleware/authMiddleware';
-import { register as regValid, login as loginValid, editProfile as editValid } from '../middleware/authValidation';
+import { login, register, forgotPassword, resetPassword } from '../controllers/authController';
+import { validateLogin, validateRegister, validatePasswordReset } from '../middleware/authValidation';
 
-const r = Router();
+const router = Router();
 
-// Public routes
-r.post('/register', regValid, register);
-r.post('/login', loginValid, login);
+// Routes publiques
+router.post('/login', validateLogin, login);
+router.post('/register', validateRegister, register);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', validatePasswordReset, resetPassword);
 
-// Protected routes
-r.use(auth);
-r.get('/me', me);
-r.patch('/me', editValid, edit);
-
-export default r;
+export default router;

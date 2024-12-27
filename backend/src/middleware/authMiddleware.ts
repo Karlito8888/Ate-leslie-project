@@ -1,25 +1,55 @@
 // backend/src/middleware/authMiddleware.ts
 
-import jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import { verifyToken, extractToken } from '../utils/auth';
+import { error } from '../utils/responseHandler';
 import { User } from '../models/User';
+import { AuthRequest } from '../types/express';
 
-export const auth = async (req: any, res: any, next: any) => {
+export const auth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).send('No token');
+    console.log('Auth headers:', req.headers.authorization);
+    const token = extractToken(req.headers.authorization || '');
+    console.log('Extracted token:', token);
+    
+    if (!token) {
+      error(res, 401, 'Non authentifié');
+      return;
+    }
 
-    const decoded = jwt.verify(token, 'secret') as any;
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).send('No user');
+    const decoded = verifyToken(token);
+    console.log('Decoded token:', decoded);
+    const user = await User.findById(decoded.id).select('-password');
+    console.log('Found user:', user);
+    
+    if (!user || typeof user.role !== 'string') {
+      error(res, 401, 'Token invalide');
+      return;
+    }
 
-    req.user = user;
+    const userObj = user.toObject();
+    (req as AuthRequest).user = {
+      _id: user._id,
+      id: user._id.toString(),
+      role: user.role,
+      username: userObj.username,
+      email: userObj.email
+    };
+    console.log('Added user to request:', (req as AuthRequest).user);
+    
     next();
-  } catch {
-    res.status(401).send('Bad token');
+  } catch (err) {
+    console.error('Auth error:', err);
+    error(res, 401, 'Non autorisé');
   }
 };
 
-export const admin = (req: any, res: any, next: any) => {
-  if (req.user.role !== 'admin') return res.status(403).send('No');
+export const admin = (req: Request, res: Response, next: NextFunction): void => {
+  const authReq = req as AuthRequest;
+  console.log('Admin check - user:', authReq.user);
+  if (!authReq.user?.role || authReq.user.role !== 'admin') {
+    error(res, 403, 'Accès réservé aux administrateurs');
+    return;
+  }
   next();
 }; 

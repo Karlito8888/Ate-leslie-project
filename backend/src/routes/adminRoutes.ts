@@ -1,18 +1,28 @@
 // backend/src/routes/adminRoutes.ts
 
-import { Router } from 'express';
-import { stats, users, delUser, msgs, assign, status } from '../controllers/adminController';
+import { Router, RequestHandler } from 'express';
+import { 
+  stats, list, delUser, getMessages, reply, assign, status 
+} from '../controllers/adminController';
 import { auth, admin } from '../middleware/authMiddleware';
 
-const r = Router();
+const router = Router();
 
-r.use(auth, admin);
+// Protection des routes admin
+router.use(auth as RequestHandler);
+router.use(admin as RequestHandler);
 
-r.get('/stats', stats);
-r.get('/users', users);
-r.delete('/users/:id', delUser);
-r.get('/msgs', msgs);
-r.post('/msgs/:id/assign', assign);
-r.put('/msgs/:id/status', status);
+// Routes de gestion des utilisateurs
+router.get('/users', list as RequestHandler);
+router.delete('/users/:id', delUser as RequestHandler);
 
-export default r; 
+// Routes de gestion des messages
+router.get('/messages', getMessages as RequestHandler);
+router.patch('/messages/:id/assign', assign as RequestHandler);
+router.patch('/messages/:id/status', status as RequestHandler);
+router.post('/messages/:id/reply', reply as RequestHandler);
+
+// Statistiques
+router.get('/stats', stats as RequestHandler);
+
+export default router; 
