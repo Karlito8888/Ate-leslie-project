@@ -5,19 +5,8 @@ import { User } from '../models/User';
 import { hash, check, generateToken, verifyToken } from '../utils/auth';
 import { send } from '../utils/email';
 import { ok, error } from '../utils/responseHandler';
-import { Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { ApiError } from '../utils/ApiError';
-
-interface AuthRequest extends Request {
-  user?: {
-    _id: Types.ObjectId;
-    id: string;
-    role: string;
-    username?: string;
-    email?: string;
-  };
-}
 
 /**
  * Inscription d'un nouvel utilisateur
@@ -182,35 +171,5 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     ok(res, {}, 'Mot de passe réinitialisé avec succès');
   } catch (e: any) {
     error(res, 400, e.message || 'Token invalide ou expiré');
-  }
-};
-
-/**
- * Changer le mot de passe
- */
-export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    const userId = req.user?._id;
-
-    if (!userId) {
-      error(res, 401, 'Non authentifié');
-      return;
-    }
-
-    // Vérifier l'ancien mot de passe
-    const user = await User.findById(userId);
-    if (!user || !(await check(currentPassword, user.password))) {
-      error(res, 401, 'Mot de passe actuel incorrect');
-      return;
-    }
-
-    // Mettre à jour le mot de passe
-    user.password = await hash(newPassword);
-    await user.save();
-
-    ok(res, {}, 'Mot de passe modifié avec succès');
-  } catch (e: any) {
-    error(res, 500, e.message || 'Erreur lors du changement de mot de passe');
   }
 };

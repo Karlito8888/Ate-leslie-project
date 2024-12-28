@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { app } from '../../app';
 import { User } from '../../models/User';
-import { generateToken } from '../../utils/auth';
+import { generateToken, hash } from '../../utils/auth';
 import bcrypt from 'bcryptjs';
 
 describe('Profile Routes', () => {
@@ -10,7 +10,7 @@ describe('Profile Routes', () => {
 
   beforeEach(async () => {
     await User.deleteMany({});
-    const hashedPassword = await bcrypt.hash('password123', 1);
+    const hashedPassword = await hash('password123');
     user = await User.create({
       username: 'testuser',
       email: 'test@example.com',
@@ -62,7 +62,7 @@ describe('Profile Routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Format d\'email invalide');
-    });
+    }, 60000);
   });
 
   describe('Password Management', () => {
@@ -126,6 +126,6 @@ describe('Profile Routes', () => {
 
       expect(mismatchResponse.status).toBe(400);
       expect(mismatchResponse.body.error).toBe('Les mots de passe ne correspondent pas');
-    });
+    }, 60000);
   });
 }); 

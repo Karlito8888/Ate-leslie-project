@@ -83,11 +83,16 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 // Changer le mot de passe
 export const changePassword = async (req: Request, res: Response) => {
-  const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
   const userId = req.user?.id;
 
   if (!userId) {
     throw new ApiError('Non authentifié', 401);
+  }
+
+  // Vérifier que les nouveaux mots de passe correspondent
+  if (newPassword !== confirmPassword) {
+    throw new ApiError('Les mots de passe ne correspondent pas', 400);
   }
 
   // Vérifier l'ancien mot de passe
@@ -102,6 +107,6 @@ export const changePassword = async (req: Request, res: Response) => {
 
   res.json({
     success: true,
-    message: 'Mot de passe modifié avec succès'
+    data: {}
   });
 }; 
