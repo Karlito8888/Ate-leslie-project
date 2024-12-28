@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useRegisterMutation, useLoginMutation } from '../../store/api/authApi'
-import { setUser } from '../../store/slices/authSlice'
+import { setCredentials } from '../../store/slices/authSlice'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './RegisterForm.module.scss'
 
@@ -20,7 +20,7 @@ interface FormData {
   password: string
   confirmPassword: string
   phoneNumber: string
-  newsletter: boolean
+  newsletterSubscribed: boolean
 }
 
 interface ValidationErrors {
@@ -45,7 +45,7 @@ const RegisterForm: React.FC = () => {
     password: '',
     confirmPassword: '',
     phoneNumber: '',
-    newsletter: true
+    newsletterSubscribed: true
   })
   
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
@@ -103,8 +103,8 @@ const RegisterForm: React.FC = () => {
       username: formData.username,
       email: formData.email,
       password: formData.password,
-      ...(formData.phoneNumber && { phoneNumber: formData.phoneNumber }),
-      newsletter: formData.newsletter
+      ...(formData.phoneNumber && { mobileNumber: formData.phoneNumber }),
+      newsletterSubscribed: formData.newsletterSubscribed
     }
 
     try {
@@ -116,18 +116,10 @@ const RegisterForm: React.FC = () => {
         password: formData.password
       }).unwrap()
 
-      if (loginResponse.token) {
-        localStorage.setItem('token', loginResponse.token)
-        dispatch(setUser(loginResponse.data.user))
-        navigate('/')
-      }
-    } catch (err: any) {
-      // console.log('Request details:', {
-      //   url: err?.request?.url,
-      //   method: err?.request?.method,
-      //   headers: err?.request?.headers,
-      //   body: err?.request?.body
-      // })
+      dispatch(setCredentials(loginResponse.data))
+      navigate('/')
+    } catch (err) {
+      console.error('Registration/Login failed:', err)
     }
   }
 
@@ -230,8 +222,8 @@ const RegisterForm: React.FC = () => {
           <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
-              name="newsletter"
-              checked={formData.newsletter}
+              name="newsletterSubscribed"
+              checked={formData.newsletterSubscribed}
               onChange={handleChange}
               className={styles.checkbox}
             />
@@ -251,15 +243,8 @@ const RegisterForm: React.FC = () => {
           className={styles.submitButton}
           disabled={isRegistering || isLoggingIn}
         >
-          {isRegistering ? 'Creating Account...' : isLoggingIn ? 'Logging in...' : 'Sign Up'}
+          {isRegistering ? 'Creating account...' : isLoggingIn ? 'Logging in...' : 'Create Account'}
         </button>
-
-        <p className={styles.loginLink}>
-          Already have an account ?{' '}
-          <span onClick={() => navigate('/auth/login')}>
-            Login here
-          </span>
-        </p>
       </form>
     </div>
   )

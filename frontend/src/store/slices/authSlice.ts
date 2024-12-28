@@ -5,9 +5,7 @@ interface User {
   id: string
   username: string
   email: string
-  role: 'user' | 'admin'
-  createdAt: string
-  updatedAt: string
+  role: string
 }
 
 interface AuthState {
@@ -18,8 +16,8 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: null,
-  isAuthenticated: false,
+  token: localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token'),
 }
 
 const authSlice = createSlice({
@@ -34,19 +32,24 @@ const authSlice = createSlice({
       state.user = user
       state.token = token
       state.isAuthenticated = true
+      localStorage.setItem('token', token)
     },
-    clearCredentials: (state) => {
+    logout: (state) => {
       state.user = null
       state.token = null
       state.isAuthenticated = false
+      localStorage.removeItem('token')
+    },
+    updateUser: (state, action: PayloadAction<User>) => {
+      state.user = action.payload
     },
   },
 })
 
-export const { setCredentials, clearCredentials } = authSlice.actions
+export const { setCredentials, logout, updateUser } = authSlice.actions
 
 export const selectCurrentUser = (state: RootState) => state.auth.user
-export const selectCurrentToken = (state: RootState) => state.auth.token
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated
+export const selectToken = (state: RootState) => state.auth.token
 
 export default authSlice.reducer

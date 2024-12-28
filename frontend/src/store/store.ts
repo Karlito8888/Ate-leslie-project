@@ -1,20 +1,35 @@
 // Store configuration
 import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
-import { api } from './api/baseApi'
-import { userApi } from './api/userApi'
+import { baseApi } from './api/baseApi'
 import authReducer from './slices/authSlice'
 import userReducer from './slices/userSlice'
+import { authApi } from './api/authApi'
+import { profileApi } from './api/profileApi'
+import { adminApi } from './api/adminApi'
+import { adminInternalMessageApi } from './api/adminInternalMessageApi'
+import { contactApi } from './api/contactApi'
+import { eventApi } from './api/eventApi'
+import { reviewApi } from './api/reviewApi'
+import { userApi } from './api/userApi'
 
 export const store = configureStore({
   reducer: {
-    [api.reducerPath]: api.reducer,
-    [userApi.reducerPath]: userApi.reducer,
     auth: authReducer,
     user: userReducer,
+    [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware, userApi.middleware),
+    getDefaultMiddleware().concat(
+      authApi.middleware,
+      profileApi.middleware,
+      adminApi.middleware,
+      adminInternalMessageApi.middleware,
+      contactApi.middleware,
+      eventApi.middleware,
+      reviewApi.middleware,
+      userApi.middleware
+    ),
 })
 
 // Enable listener behavior for the store

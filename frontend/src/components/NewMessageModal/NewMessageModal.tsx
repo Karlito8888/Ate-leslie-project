@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
+import { Admin } from '../../store/api/adminApi';
 import styles from './NewMessageModal.module.scss';
-
-interface Admin {
-  _id: string;
-  username: string;
-}
 
 interface Props {
   admins: Admin[];
@@ -52,7 +48,7 @@ const NewMessageModal: React.FC<Props> = ({ admins, onClose, onSend }) => {
             >
               <option value="">Select an admin</option>
               {admins.map(admin => (
-                <option key={admin._id} value={admin._id}>
+                <option key={admin.id} value={admin.id}>
                   {admin.username}
                 </option>
               ))}

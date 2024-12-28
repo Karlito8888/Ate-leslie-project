@@ -1,32 +1,15 @@
 import React, { useState } from 'react';
+import { Message, MessageStatus } from '../../store/api/adminApi';
 import styles from './MessageModal.module.scss';
-
-interface Reply {
-  admin: {
-    username: string;
-  };
-  content: string;
-  createdAt: string;
-}
-
-interface Message {
-  _id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: string;
-  replies: Reply[];
-  createdAt: string;
-}
 
 interface Props {
   message: Message;
   onClose: () => void;
+  onUpdateStatus: (messageId: string, status: MessageStatus) => Promise<void>;
   onReply: (messageId: string, content: string) => Promise<void>;
 }
 
-const MessageModal: React.FC<Props> = ({ message, onClose, onReply }) => {
+const MessageModal: React.FC<Props> = ({ message, onClose, onUpdateStatus, onReply }) => {
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,10 +19,18 @@ const MessageModal: React.FC<Props> = ({ message, onClose, onReply }) => {
 
     setIsSubmitting(true);
     try {
-      await onReply(message._id, replyContent);
+      await onReply(message.id, replyContent);
       setReplyContent('');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (status: MessageStatus) => {
+    try {
+      await onUpdateStatus(message.id, status);
+    } catch (error) {
+      console.error('Failed to update status:', error);
     }
   };
 
@@ -55,37 +46,34 @@ const MessageModal: React.FC<Props> = ({ message, onClose, onReply }) => {
           <div className={styles.messageInfo}>
             <p><strong>From:</strong> {message.name} ({message.email})</p>
             <p><strong>Date:</strong> {new Date(message.createdAt).toLocaleString()}</p>
-            <p><strong>Status:</strong> {message.status}</p>
+            <div className={styles.statusSection}>
+              <strong>Status:</strong>
+              <select
+                value={message.status}
+                onChange={(e) => handleStatusChange(e.target.value as MessageStatus)}
+                className={styles.statusSelect}
+              >
+                <option value="new">New</option>
+                <option value="assigned">Assigned</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
           </div>
 
           <div className={styles.messageContent}>
-            <p>{message.message}</p>
+            <p>{message.content}</p>
           </div>
-
-          {message.replies.length > 0 && (
-            <div className={styles.replies}>
-              <h4>Réponses:</h4>
-              {message.replies.map((reply, index) => (
-                <div key={index} className={styles.reply}>
-                  <div className={styles.replyHeader}>
-                    <span>{reply.admin.username}</span>
-                    <span>{new Date(reply.createdAt).toLocaleString()}</span>
-                  </div>
-                  <p>{reply.content}</p>
-                </div>
-              ))}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className={styles.replyForm}>
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Écrivez votre réponse..."
+              placeholder="Write your reply..."
               rows={4}
             />
             <button type="submit" disabled={isSubmitting || !replyContent.trim()}>
-              {isSubmitting ? 'Envoi...' : 'Répondre'}
+              {isSubmitting ? 'Sending...' : 'Reply'}
             </button>
           </form>
         </div>

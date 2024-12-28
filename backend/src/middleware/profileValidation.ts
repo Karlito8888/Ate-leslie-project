@@ -15,8 +15,29 @@ export const validateProfileUpdate = [
     .optional()
     .trim()
     .isEmail()
-    .withMessage('Email invalide')
+    .withMessage('Format d\'email invalide')
     .normalizeEmail(),
+
+  body('newsletterSubscribed')
+    .optional()
+    .isBoolean()
+    .withMessage('La valeur newsletterSubscribed doit être un booléen'),
+
+  body('mobileNumber')
+    .optional()
+    .custom((value) => {
+      if (!value) return true;
+      return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(value);
+    })
+    .withMessage('Format de numéro de mobile invalide'),
+
+  body('landlineNumber')
+    .optional()
+    .custom((value) => {
+      if (!value) return true;
+      return /^(\+\d{1,3}[- ]?)?\d{10}$/.test(value);
+    })
+    .withMessage('Format de numéro fixe invalide'),
 
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);

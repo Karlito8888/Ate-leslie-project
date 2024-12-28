@@ -1,41 +1,37 @@
-import { User, UserInfo } from '../../types/user';
-import { api } from './baseApi';
+import { BaseEntity, createExtendedApi } from './baseApi';
 
-export const userApi = api.injectEndpoints({
+interface User extends BaseEntity {
+  username: string;
+  email: string;
+  role: string;
+  newsletterSubscribed: boolean;
+}
+
+interface UserUpdateRequest {
+  username?: string;
+  email?: string;
+  newsletterSubscribed?: boolean;
+}
+
+export const userApi = createExtendedApi({
+  reducerPath: 'userApi',
   endpoints: (builder) => ({
-    getUserProfile: builder.query<User, void>({
-      query: () => ({
-        url: '/auth/profile',
-        method: 'GET'
-      }),
-      transformResponse: (response: { data: { user: User } }) => {
-        const user = response.data.user;
-        if (user.birthDate) {
-          const date = new Date(user.birthDate);
-          return {
-            ...user,
-            birthDate: `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`
-          };
-        }
-        return user;
-      },
-      providesTags: ['Profile'],
+    getUser: builder.query<User, string>({
+      query: (id) => `/users/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'AdminUsers', id }],
     }),
-    updateUserProfile: builder.mutation<User, UserInfo>({
-      query: (userData) => ({
-        url: '/auth/profile',
+    updateUser: builder.mutation<User, { id: string; data: UserUpdateRequest }>({
+      query: ({ id, data }) => ({
+        url: `/users/${id}`,
         method: 'PATCH',
-        body: {
-          ...userData,
-          birthDate: userData.birthDate ? new Date(userData.birthDate.split('/').reverse().join('-')) : undefined
-        },
+        body: data,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'AdminUsers', id }],
     }),
   }),
 });
 
 export const {
-  useGetUserProfileQuery,
-  useUpdateUserProfileMutation,
+  useGetUserQuery,
+  useUpdateUserMutation,
 } = userApi; 

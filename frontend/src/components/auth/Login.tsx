@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { useLoginMutation } from '../../store/api/authApi'
-import { setUser } from '../../store/slices/authSlice'
+import { setCredentials } from '../../store/slices/authSlice'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import styles from './Login.module.scss'
 
@@ -73,20 +73,13 @@ const Login: React.FC = () => {
         password: formData.password
       }).unwrap()
       
-      if (response.token) {
-        // Stocker le token et les données utilisateur
-        localStorage.setItem('token', response.token)
-        localStorage.setItem('userData', JSON.stringify(response.data.user))
-        dispatch(setUser(response.data.user))
-        
-        // Redirection basée sur le rôle
-        if (response.data.user.role === 'admin') {
-          navigate('/admin')
-        } else {
-          navigate('/profile')
-        }
+      dispatch(setCredentials(response.data))
+      
+      // Redirection basée sur le rôle
+      if (response.data.user.role === 'admin') {
+        navigate('/admin')
       } else {
-        console.error('No token in response:', response)
+        navigate('/profile')
       }
     } catch (err) {
       console.error('Login failed:', err)

@@ -4,8 +4,8 @@
   "description": "Backend minimaliste pour application web moderne",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon --no-deprecation src/index.ts",
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -28,6 +28,7 @@
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
+    "sharp": "^0.33.5",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.2"
   },

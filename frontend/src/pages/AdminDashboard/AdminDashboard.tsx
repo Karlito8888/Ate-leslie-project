@@ -2,67 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import { 
-  useGetDashboardStatsQuery, 
-  useGetAllUsersQuery, 
+  useGetStatsQuery, 
+  useGetUsersQuery, 
   useDeleteUserMutation,
   useGetMessagesQuery,
   useAssignMessageMutation,
-  useUpdateMessageStatusMutation
+  useUpdateMessageStatusMutation,
+  Message,
+  Admin,
+  AdminMessage,
+  MessageStatus
 } from '../../store/api/adminApi';
 import { toast } from 'react-toastify';
 import styles from './AdminDashboard.module.scss';
 import MessageModal from '../../components/MessageModal/MessageModal';
 import NewMessageModal from '../../components/NewMessageModal/NewMessageModal';
-
-interface User {
-  _id: string;
-  username: string;
-  email: string;
-  role: string;
-  createdAt: string;
-}
-
-type MessageStatus = 'new' | 'assigned' | 'in_progress' | 'resolved';
-
-interface Reply {
-  admin: {
-    username: string;
-  };
-  content: string;
-  createdAt: string;
-}
-
-interface Message {
-  _id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: MessageStatus;
-  assignedTo?: string;
-  replies: Reply[];
-  createdAt: string;
-}
-
-interface ApiMessage extends Omit<Message, 'replies'> {
-  replies?: Reply[];
-}
-
-interface AdminMessage {
-  _id: string;
-  from: {
-    _id: string;
-    username: string;
-  };
-  to: {
-    _id: string;
-    username: string;
-  };
-  subject: string;
-  content: string;
-  isRead: boolean;
-  createdAt: string;
-}
 
 const AdminDashboard: React.FC = () => {
   const user = useSelector(selectCurrentUser);
@@ -74,19 +28,19 @@ const AdminDashboard: React.FC = () => {
   const [isLoadingInternalMessages, setIsLoadingInternalMessages] = useState(false);
   
   const { 
-    data: statsData, 
+    data: stats, 
     isLoading: isLoadingStats, 
     error: statsError 
-  } = useGetDashboardStatsQuery();
+  } = useGetStatsQuery();
 
   const { 
-    data: usersData, 
+    data: users, 
     isLoading: isLoadingUsers, 
     error: usersError 
-  } = useGetAllUsersQuery();
+  } = useGetUsersQuery();
 
   const {
-    data: messagesData,
+    data: messages,
     isLoading: isLoadingMessages,
     error: messagesError
   } = useGetMessagesQuery();
@@ -223,211 +177,182 @@ const AdminDashboard: React.FC = () => {
     return <div className={styles.error}>{errorMessage}</div>;
   }
 
-  const stats = statsData?.data?.stats || { totalUsers: 0, totalAdmins: 0 };
-  const users = usersData?.data?.users || [];
-  const apiMessages = (messagesData?.data?.messages || []) as ApiMessage[];
+  const currentStats = stats || { 
+    totalUsers: 0, 
+    newUsers: 0, 
+    totalMessages: 0, 
+    unreadMessages: 0 
+  };
   
-  const messages: Message[] = apiMessages.map(msg => ({
-    ...msg,
-    replies: msg.replies || []
-  }));
+  const currentUsers = users || [];
+  const currentMessages = messages || [];
 
-  const filteredUsers = users.filter((user: User) =>
+  const filteredUsers = currentUsers.filter(user =>
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredMessages = messages.filter(message =>
+  const filteredMessages = currentMessages.filter(message =>
     message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const admins = users.filter((u: User) => 
-    u.role === 'admin' && u._id !== user?.id
+  const admins = currentUsers.filter((u): u is Admin => 
+    u.role === 'admin' && u.id !== user?.id
   );
 
   const renderOverviewTab = () => (
-    <div className={styles.statsGrid}>
-      <div className={styles.statCard}>
-        <h3>Total Users</h3>
-        <div className={styles.statValue}>{stats.totalUsers}</div>
-      </div>
-      <div className={styles.statCard}>
-        <h3>Total Admins</h3>
-        <div className={styles.statValue}>{stats.totalAdmins}</div>
-      </div>
-      <div className={styles.statCard}>
-        <h3>Total Messages</h3>
-        <div className={styles.statValue}>{messages.length}</div>
-      </div>
-      <div className={styles.statCard}>
-        <h3>Unassigned Messages</h3>
-        <div className={styles.statValue}>
-          {messages.filter(m => !m.assignedTo).length}
+    <div className={styles.overviewTab}>
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <h3>Total Users</h3>
+          <div className={styles.statValue}>{currentStats.totalUsers}</div>
+        </div>
+        <div className={styles.statCard}>
+          <h3>New Users</h3>
+          <div className={styles.statValue}>{currentStats.newUsers}</div>
+        </div>
+        <div className={styles.statCard}>
+          <h3>Total Messages</h3>
+          <div className={styles.statValue}>{currentStats.totalMessages}</div>
+        </div>
+        <div className={styles.statCard}>
+          <h3>Unread Messages</h3>
+          <div className={styles.statValue}>{currentStats.unreadMessages}</div>
         </div>
       </div>
     </div>
   );
 
   const renderUsersTab = () => (
-    <section className={styles.contentSection}>
-      <h2>User Management</h2>
-      
+    <div className={styles.usersTab}>
       <div className={styles.searchBar}>
         <input
           type="text"
-          placeholder="Search users by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search users..."
         />
       </div>
-
-      {filteredUsers.length > 0 ? (
-        <table className={styles.userTable}>
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Created At</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user: User) => (
-              <tr key={user._id}>
-                <td>{user.username}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
-                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td>
-                  {user.role !== 'admin' && (
-                    <button
-                      className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDeleteUser(user._id)}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className={styles.noResults}>No users found</p>
-      )}
-    </section>
+      
+      <div className={styles.usersList}>
+        {filteredUsers.map(user => (
+          <div key={user.id} className={styles.userCard}>
+            <div className={styles.userInfo}>
+              <h3>{user.username}</h3>
+              <p>{user.email}</p>
+              <p>Role: {user.role}</p>
+              <p>Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div className={styles.userActions}>
+              <button
+                onClick={() => handleDeleteUser(user.id)}
+                className={styles.deleteButton}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 
   const renderMessagesTab = () => (
-    <section className={styles.contentSection}>
-      <h2>Messages Management</h2>
-      
+    <div className={styles.messagesTab}>
       <div className={styles.searchBar}>
         <input
           type="text"
-          placeholder="Search messages by subject, name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search messages..."
         />
       </div>
+      
+      <div className={styles.messagesList}>
+        {filteredMessages.map(message => (
+          <div 
+            key={message.id} 
+            className={styles.messageCard}
+            onClick={() => setSelectedMessage(message)}
+          >
+            <div className={styles.messageHeader}>
+              <h3>{message.subject}</h3>
+              <span className={styles.status}>{message.status}</span>
+            </div>
+            <p className={styles.sender}>
+              From: {message.name} ({message.email})
+            </p>
+            <p className={styles.preview}>{message.content.substring(0, 100)}...</p>
+            <div className={styles.messageFooter}>
+              <span>{new Date(message.createdAt).toLocaleDateString()}</span>
+              {!message.assignedTo && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAssignMessage(message.id);
+                  }}
+                  className={styles.assignButton}
+                >
+                  Assign to me
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {filteredMessages.length > 0 ? (
-        <table className={styles.messageTable}>
-          <thead>
-            <tr>
-              <th>Subject</th>
-              <th>From</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMessages.map((message: Message) => (
-              <tr key={message._id}>
-                <td>{message.subject}</td>
-                <td>{message.name}</td>
-                <td>{message.email}</td>
-                <td>
-                  <select
-                    value={message.status}
-                    onChange={(e) => handleUpdateMessageStatus(message._id, e.target.value as MessageStatus)}
-                    className={styles.statusSelect}
-                  >
-                    <option value="new">New</option>
-                    <option value="assigned">Assigned</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="resolved">Resolved</option>
-                  </select>
-                </td>
-                <td>{new Date(message.createdAt).toLocaleDateString()}</td>
-                <td>
-                  {!message.assignedTo && (
-                    <button
-                      className={`${styles.actionButton} ${styles.assign}`}
-                      onClick={() => handleAssignMessage(message._id)}
-                    >
-                      Assign to Me
-                    </button>
-                  )}
-                  <button
-                    className={`${styles.actionButton} ${styles.view}`}
-                    onClick={() => setSelectedMessage(message)}
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className={styles.noResults}>No messages found</p>
+      {selectedMessage && (
+        <MessageModal
+          message={selectedMessage}
+          onClose={() => setSelectedMessage(null)}
+          onUpdateStatus={handleUpdateMessageStatus}
+          onReply={handleReply}
+        />
       )}
-    </section>
+    </div>
   );
 
   const renderInternalMessagesTab = () => (
-    <section className={styles.contentSection}>
-      <div className={styles.header}>
-        <h2>Internal Messages</h2>
-        <button 
-          className={styles.newMessageButton}
-          onClick={() => setShowNewMessageModal(true)}
-        >
-          New Message
-        </button>
-      </div>
+    <div className={styles.internalMessagesTab}>
+      <button
+        onClick={() => setShowNewMessageModal(true)}
+        className={styles.newMessageButton}
+      >
+        New Message
+      </button>
 
       {isLoadingInternalMessages ? (
         <div className={styles.loading}>Loading messages...</div>
-      ) : internalMessages.length > 0 ? (
+      ) : (
         <div className={styles.messagesList}>
           {internalMessages.map(message => (
             <div 
-              key={message._id} 
+              key={message.id}
               className={`${styles.messageCard} ${!message.isRead ? styles.unread : ''}`}
-              onClick={() => handleMarkAsRead(message._id)}
+              onClick={() => handleMarkAsRead(message.id)}
             >
               <div className={styles.messageHeader}>
-                <span className={styles.from}>From: {message.from.username}</span>
-                <span className={styles.date}>
-                  {new Date(message.createdAt).toLocaleString()}
-                </span>
+                <h3>{message.subject}</h3>
+                <span>{new Date(message.createdAt).toLocaleDateString()}</span>
               </div>
-              <h3 className={styles.subject}>{message.subject}</h3>
-              <p className={styles.preview}>{message.content}</p>
+              <p>From: {message.from.username}</p>
+              <p>To: {message.to.username}</p>
+              <p className={styles.preview}>{message.content.substring(0, 100)}...</p>
             </div>
           ))}
         </div>
-      ) : (
-        <p className={styles.noMessages}>No messages in your inbox</p>
       )}
-    </section>
+
+      {showNewMessageModal && (
+        <NewMessageModal
+          admins={admins}
+          onClose={() => setShowNewMessageModal(false)}
+          onSend={handleSendInternalMessage}
+        />
+      )}
+    </div>
   );
 
   const renderSettingsTab = () => (
@@ -489,6 +414,7 @@ const AdminDashboard: React.FC = () => {
         <MessageModal
           message={selectedMessage}
           onClose={() => setSelectedMessage(null)}
+          onUpdateStatus={handleUpdateMessageStatus}
           onReply={handleReply}
         />
       )}

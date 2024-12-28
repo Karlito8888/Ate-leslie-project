@@ -1,44 +1,75 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createApi, fetchBaseQuery, EndpointBuilder, BaseQueryFn, FetchArgs, FetchBaseQueryError, FetchBaseQueryMeta } from '@reduxjs/toolkit/query/react'
 import { RootState } from '../store'
 
-export const baseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-// API Types
-export type TagTypes = 'Profile' | 'Users' | 'Events' | 'Reviews' | 'Messages' | 'Auth' | 'Contact'
-
-export interface ApiError {
-  status: number
-  data: {
-    message: string
-  }
+// Types communs
+export interface BaseEntity {
+  id: string
+  createdAt: string
+  updatedAt?: string
 }
 
 export interface ApiResponse<T> {
   success: boolean
-  data: T
+  data?: T
   message?: string
+  error?: string
 }
 
-// Base API configuration
-export const api = createApi({
+// Tags communs
+export type TagTypes = 
+  | 'Auth'
+  | 'Profile'
+  | 'AdminUsers'
+  | 'AdminMessages'
+  | 'AdminStats'
+  | 'Contact'
+  | 'Events'
+  | 'Reviews'
+
+// Type pour le builder d'endpoints
+export type BuilderType = EndpointBuilder<
+  BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError, {}, FetchBaseQueryMeta>,
+  TagTypes,
+  string
+>
+
+// Configuration de base pour toutes les APIs
+export const baseApi = createApi({
   reducerPath: 'api',
-  tagTypes: ['Profile', 'Users', 'Events', 'Reviews', 'Messages', 'Auth', 'Contact'] as const,
-  baseQuery: fetchBaseQuery({ 
-    baseUrl,
+  baseQuery: fetchBaseQuery({
+    baseUrl: API_URL,
     prepareHeaders: (headers, { getState }) => {
-      // Try to get token from Redux store first
       const token = (getState() as RootState).auth.token
-      
       if (token) {
         headers.set('authorization', `Bearer ${token}`)
       }
       return headers
     },
-    credentials: 'include', // Pour gérer les cookies
   }),
   endpoints: () => ({}),
-  keepUnusedDataFor: 5 * 60, // 5 minutes
+  tagTypes: [
+    'Auth',
+    'Profile',
+    'AdminUsers',
+    'AdminMessages',
+    'AdminStats',
+    'Contact',
+    'Events',
+    'Reviews',
+  ],
 })
 
-// Export des hooks qui seront générés automatiquement
-export const enhancedApi = api
+// Helper pour créer une API étendue
+export const createExtendedApi = <T extends Record<string, any>>(
+  config: {
+    reducerPath: string
+    endpoints: (builder: BuilderType) => T
+  }
+) => {
+  return baseApi.injectEndpoints({
+    endpoints: config.endpoints,
+    overrideExisting: false,
+  })
+}

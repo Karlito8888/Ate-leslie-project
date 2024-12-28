@@ -1,99 +1,103 @@
-import { api } from './baseApi';
-import { ApiResponse } from './baseApi';
+import { BaseEntity, createExtendedApi } from './baseApi';
 
-interface DashboardStats {
-  stats: {
-    totalUsers: number;
-    totalAdmins: number;
-  };
-}
+export type MessageStatus = 'new' | 'assigned' | 'in_progress' | 'resolved';
 
-interface User {
-  _id: string;
+export interface User extends BaseEntity {
   username: string;
   email: string;
   role: string;
-  createdAt: string;
+  newsletterSubscribed: boolean;
 }
 
-interface UsersResponse {
-  users: User[];
-}
-
-interface Message {
-  _id: string;
+export interface Message extends BaseEntity {
   name: string;
   email: string;
   subject: string;
-  message: string;
-  createdAt: string;
+  content: string;
+  status: MessageStatus;
   assignedTo?: string;
-  status: 'new' | 'assigned' | 'in_progress' | 'resolved';
 }
 
-interface MessagesResponse {
-  messages: Message[];
+export interface Stats {
+  totalUsers: number;
+  newUsers: number;
+  totalMessages: number;
+  unreadMessages: number;
 }
 
-export const adminApi = api.injectEndpoints({
+export interface Admin extends User {
+  role: 'admin';
+}
+
+export interface AdminMessage extends BaseEntity {
+  from: {
+    id: string;
+    username: string;
+  };
+  to: {
+    id: string;
+    username: string;
+  };
+  subject: string;
+  content: string;
+  isRead: boolean;
+}
+
+export const adminApi = createExtendedApi({
+  reducerPath: 'adminApi',
   endpoints: (builder) => ({
-    getDashboardStats: builder.query<ApiResponse<DashboardStats>, void>({
-      query: () => ({
-        url: '/api/admin/dashboard',
-        method: 'GET',
-      }),
-      providesTags: ['AdminStats'],
+    getUsers: builder.query<User[], void>({
+      query: () => '/admin/users',
+      providesTags: ['AdminUsers'],
     }),
-
-    getAllUsers: builder.query<ApiResponse<UsersResponse>, void>({
-      query: () => ({
-        url: '/api/admin/users',
-        method: 'GET',
-      }),
-      providesTags: ['Users'],
-    }),
-
     deleteUser: builder.mutation<void, string>({
-      query: (userId: string) => ({
-        url: `/api/admin/users/${userId}`,
+      query: (userId) => ({
+        url: `/admin/users/${userId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Users', 'AdminStats'],
+      invalidatesTags: ['AdminUsers'],
     }),
-
-    getMessages: builder.query<ApiResponse<MessagesResponse>, void>({
-      query: () => ({
-        url: '/api/admin/messages',
-        method: 'GET',
-      }),
-      providesTags: ['Messages'],
+    getMessages: builder.query<Message[], void>({
+      query: () => '/admin/messages',
+      providesTags: ['AdminMessages'],
     }),
-
-    assignMessage: builder.mutation<void, { messageId: string, adminId: string }>({
+    assignMessage: builder.mutation<void, { messageId: string; adminId: string }>({
       query: ({ messageId, adminId }) => ({
-        url: `/api/admin/messages/${messageId}/assign`,
-        method: 'POST',
+        url: `/admin/messages/${messageId}/assign`,
+        method: 'PATCH',
         body: { adminId },
       }),
-      invalidatesTags: ['Messages'],
+      invalidatesTags: ['AdminMessages'],
     }),
-
-    updateMessageStatus: builder.mutation<void, { messageId: string, status: Message['status'] }>({
+    updateMessageStatus: builder.mutation<void, { messageId: string; status: Message['status'] }>({
       query: ({ messageId, status }) => ({
-        url: `/api/admin/messages/${messageId}/status`,
-        method: 'PUT',
+        url: `/admin/messages/${messageId}/status`,
+        method: 'PATCH',
         body: { status },
       }),
-      invalidatesTags: ['Messages'],
+      invalidatesTags: ['AdminMessages'],
+    }),
+    replyToMessage: builder.mutation<void, { messageId: string; content: string }>({
+      query: ({ messageId, content }) => ({
+        url: `/admin/messages/${messageId}/reply`,
+        method: 'POST',
+        body: { content },
+      }),
+      invalidatesTags: ['AdminMessages'],
+    }),
+    getStats: builder.query<Stats, void>({
+      query: () => '/admin/stats',
+      providesTags: ['AdminStats'],
     }),
   }),
 });
 
 export const {
-  useGetDashboardStatsQuery,
-  useGetAllUsersQuery,
+  useGetUsersQuery,
   useDeleteUserMutation,
   useGetMessagesQuery,
   useAssignMessageMutation,
   useUpdateMessageStatusMutation,
+  useReplyToMessageMutation,
+  useGetStatsQuery,
 } = adminApi; 

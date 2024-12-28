@@ -8,7 +8,7 @@ import { BsInfoSquare } from "react-icons/bs"
 import { TiMessages } from "react-icons/ti"
 import { FiUserPlus, FiLogIn } from "react-icons/fi"
 import { useDispatch, useSelector } from 'react-redux'
-import { clearAuth, selectCurrentUser } from '../../store/slices/authSlice'
+import { logout, selectCurrentUser } from '../../store/slices/authSlice'
 import styles from './NavigationAside.module.scss'
 
 interface NavigationAsideProps {
@@ -27,7 +27,7 @@ const NavigationAside: React.FC<NavigationAsideProps> = ({ isFirstVisit }) => {
   console.log('NavigationAside - role:', currentUser?.role)
 
   const handleLogout = () => {
-    dispatch(clearAuth())
+    dispatch(logout())
     navigate('/auth/login')
   }
 

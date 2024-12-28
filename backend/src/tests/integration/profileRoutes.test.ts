@@ -2,7 +2,9 @@ import request from 'supertest';
 import { app } from '../../app';
 import { User } from '../../models/User';
 import { generateToken, hash } from '../../utils/auth';
-import bcrypt from 'bcryptjs';
+
+// Augmenter le timeout global pour les tests d'intégration
+jest.setTimeout(10000);
 
 describe('Profile Routes', () => {
   let user: any;
@@ -31,11 +33,6 @@ describe('Profile Routes', () => {
       expect(response.body.data.user.username).toBe('testuser');
     });
 
-    it('should reject unauthorized access', async () => {
-      const response = await request(app).get('/api/profile');
-      expect(response.status).toBe(401);
-    });
-
     it('should update profile successfully', async () => {
       const response = await request(app)
         .patch('/api/profile')
@@ -49,9 +46,6 @@ describe('Profile Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.data.user.username).toBe('newusername');
       expect(response.body.data.user.email).toBe('new@example.com');
-
-      // Mettre à jour l'utilisateur pour les tests suivants
-      user = await User.findById(user._id);
     });
 
     it('should reject invalid email format', async () => {
@@ -60,15 +54,23 @@ describe('Profile Routes', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({ email: 'invalid-email' });
 
+      // Vérifier que l'erreur est bien retournée comme attendu
       expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Format d\'email invalide');
-    }, 60000);
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Format d\'email invalide'
+      });
+    });
+
+    it('should reject unauthorized access', async () => {
+      const response = await request(app).get('/api/profile');
+      expect(response.status).toBe(401);
+    });
   });
 
   describe('Password Management', () => {
-    it('should handle password change flow', async () => {
-      // 1. Changer le mot de passe
-      const changeResponse = await request(app)
+    it('should change password successfully', async () => {
+      const response = await request(app)
         .post('/api/profile/change-password')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
@@ -77,55 +79,89 @@ describe('Profile Routes', () => {
           confirmPassword: 'NewPassword123!'
         });
 
-      expect(changeResponse.status).toBe(200);
-      expect(changeResponse.body.success).toBe(true);
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
 
-      // 2. Essayer de se connecter avec l'ancien mot de passe (devrait échouer)
-      const oldLoginResponse = await request(app)
+    it('should reject login with old password after change', async () => {
+      // D'abord changer le mot de passe
+      await request(app)
+        .post('/api/profile/change-password')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          currentPassword: 'password123',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!'
+        });
+
+      // Essayer de se connecter avec l'ancien mot de passe
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: user.email,
           password: 'password123'
         });
 
-      expect(oldLoginResponse.status).toBe(401);
+      expect(response.status).toBe(401);
+    });
 
-      // 3. Se connecter avec le nouveau mot de passe
-      const newLoginResponse = await request(app)
+    it('should allow login with new password', async () => {
+      // D'abord changer le mot de passe
+      await request(app)
+        .post('/api/profile/change-password')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          currentPassword: 'password123',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!'
+        });
+
+      // Se connecter avec le nouveau mot de passe
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: user.email,
           password: 'NewPassword123!'
         });
 
-      expect(newLoginResponse.status).toBe(200);
-      expect(newLoginResponse.body.success).toBe(true);
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+    });
 
-      // 4. Tester le rejet de mot de passe incorrect
-      const incorrectResponse = await request(app)
+    it('should reject mismatched passwords', async () => {
+      const response = await request(app)
+        .post('/api/profile/change-password')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          currentPassword: 'password123',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'DifferentPassword123!'
+        });
+
+      // Vérifier que l'erreur est bien retournée comme attendu
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        success: false,
+        error: 'Les mots de passe ne correspondent pas'
+      });
+    });
+
+    it('should reject incorrect current password', async () => {
+      const response = await request(app)
         .post('/api/profile/change-password')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           currentPassword: 'wrongpassword',
-          newPassword: 'AnotherPassword123!',
-          confirmPassword: 'AnotherPassword123!'
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!'
         });
 
-      expect(incorrectResponse.status).toBe(401);
-      expect(incorrectResponse.body.error).toBe('Mot de passe actuel incorrect');
-
-      // 5. Tester le rejet de mots de passe non correspondants
-      const mismatchResponse = await request(app)
-        .post('/api/profile/change-password')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          currentPassword: 'NewPassword123!',
-          newPassword: 'AnotherPassword123!',
-          confirmPassword: 'DifferentPassword123!'
-        });
-
-      expect(mismatchResponse.status).toBe(400);
-      expect(mismatchResponse.body.error).toBe('Les mots de passe ne correspondent pas');
-    }, 60000);
+      // Vérifier que l'erreur est bien retournée comme attendu
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        success: false,
+        message: 'Mot de passe actuel incorrect'
+      });
+    });
   });
 }); 
