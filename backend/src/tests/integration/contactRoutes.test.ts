@@ -1,9 +1,9 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { app } from '../../app';
+import { app } from '../../index';
 import { Contact } from '../../models/Contact';
 import { User } from '../../models/User';
-import { generateToken } from '../../utils/auth';
+import { generateToken } from '../../index';
 
 // Mock du service d'email pour éviter l'envoi réel
 jest.mock('../../utils/email', () => ({

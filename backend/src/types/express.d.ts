@@ -1,30 +1,18 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Request } from 'express';
 import { Types } from 'mongoose';
+
+export interface RequestUser {
+  _id: Types.ObjectId;
+  id: string;
+  role: 'user' | 'admin';
+  username: string;
+  email: string;
+}
 
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        _id: Types.ObjectId;
-        id: string;
-        role: string;
-        username?: string;
-        email?: string;
-      };
+      user?: RequestUser;
     }
   }
-}
-
-export interface AuthRequest extends Request {
-  user: {
-    _id: Types.ObjectId;
-    id: string;
-    role: string;
-    username?: string;
-    email?: string;
-  };
-}
-
-export type AuthHandler = RequestHandler<any, any, any, any>;
-
-export {}; 
+} 

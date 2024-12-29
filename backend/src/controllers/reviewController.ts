@@ -1,35 +1,81 @@
 import { Request, Response } from 'express';
+import { Types } from 'mongoose';
 import { Review } from '../models/Review';
-import { Event } from '../models/Event';
-import { error, created } from '../utils/responseHandler';
 
-export const add = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+  user: {
+    _id: Types.ObjectId;
+    id: string;
+    role: 'user' | 'admin';
+    username: string;
+    email: string;
+  };
+}
+
+// Lister les reviews d'un événement
+export const list = async (req: Request, res: Response) => {
   try {
-    const eventId = req.params.eventId;
-    const userId = req.user?.id;
+    const reviews = await Review.find({ event: req.params.eventId })
+      .populate('user', 'username')
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la récupération des reviews" });
+  }
+};
 
-    // Vérifier si l'événement existe
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return error(res, 404, 'Événement non trouvé');
-    }
-
-    // Vérifier si l'utilisateur a déjà laissé une review
-    const existingReview = await Review.findOne({ event: eventId, user: userId });
-    if (existingReview) {
-      return error(res, 400, 'Vous avez déjà laissé une review pour cet événement');
-    }
-
-    // Créer la review
-    const review = await Review.create({
-      event: eventId,
-      user: userId,
+// Ajouter une review
+export const add = async (req: AuthRequest, res: Response) => {
+  try {
+    const review = new Review({
+      user: req.user.id,
+      event: req.params.eventId,
       stars: req.body.stars,
       text: req.body.text
     });
+    await review.save();
+    res.status(201).json(review);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de l'ajout de la review" });
+  }
+};
 
-    return created(res, { review }, 'Review créée avec succès');
-  } catch (e: any) {
-    return error(res, 500, e.message || 'Erreur lors de la création de la review');
+// Modifier une review
+export const update = async (req: AuthRequest, res: Response) => {
+  try {
+    const review = await Review.findOne({ 
+      _id: req.params.reviewId,
+      user: req.user.id // Vérifier que l'utilisateur est l'auteur
+    });
+
+    if (!review) {
+      return res.status(404).json({ message: "Review non trouvée ou non autorisée" });
+    }
+
+    review.stars = req.body.stars || review.stars;
+    review.text = req.body.text || review.text;
+    await review.save();
+
+    res.json(review);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la modification de la review" });
+  }
+};
+
+// Supprimer une review
+export const remove = async (req: AuthRequest, res: Response) => {
+  try {
+    const review = await Review.findOneAndDelete({
+      _id: req.params.reviewId,
+      user: req.user.id // Vérifier que l'utilisateur est l'auteur
+    });
+
+    if (!review) {
+      return res.status(404).json({ message: "Review non trouvée ou non autorisée" });
+    }
+
+    res.json({ message: "Review supprimée avec succès" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la suppression de la review" });
   }
 }; 

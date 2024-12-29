@@ -1,10 +1,10 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { app } from '../../app';
+import { app } from '../../index';
 import { Review } from '../../models/Review';
 import { Event } from '../../models/Event';
 import { User } from '../../models/User';
-import { generateToken } from '../../utils/auth';
+import { generateToken } from '../../index';
 
 describe('Review Routes', () => {
   let user: any;
@@ -23,7 +23,7 @@ describe('Review Routes', () => {
       password: 'password123',
       role: 'user'
     });
-    userToken = generateToken(user);
+    userToken = generateToken(user._id.toString());
 
     // Créer un événement pour les tests
     event = await Event.create({
@@ -114,7 +114,7 @@ describe('Review Routes', () => {
         password: 'password123',
         role: 'user'
       });
-      const user2Token = generateToken(user2);
+      const user2Token = generateToken(user2._id.toString());
 
       // Première review : 4 étoiles
       await request(app)

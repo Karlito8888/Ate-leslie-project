@@ -1,7 +1,7 @@
 import request from 'supertest';
-import { app } from '../../app';
+import { app, generateToken } from '../../index';
 import { User } from '../../models/User';
-import { generateToken, hash } from '../../utils/auth';
+import bcrypt from 'bcryptjs';
 
 // Augmenter le timeout global pour les tests d'intégration
 jest.setTimeout(10000);
@@ -12,7 +12,7 @@ describe('Profile Routes', () => {
 
   beforeEach(async () => {
     await User.deleteMany({});
-    const hashedPassword = await hash('password123');
+    const hashedPassword = await bcrypt.hash('password123', 10);
     user = await User.create({
       username: 'testuser',
       email: 'test@example.com',
@@ -20,7 +20,7 @@ describe('Profile Routes', () => {
       role: 'user',
       newsletterSubscribed: true
     });
-    userToken = generateToken(user);
+    userToken = generateToken(user._id.toString());
   });
 
   describe('Profile Management', () => {
@@ -33,7 +33,7 @@ describe('Profile Routes', () => {
       expect(response.body.data.user.username).toBe('testuser');
     });
 
-    it('should update profile successfully', async () => {
+    it('should update basic profile info successfully', async () => {
       const response = await request(app)
         .patch('/api/profile')
         .set('Authorization', `Bearer ${userToken}`)
@@ -48,13 +48,152 @@ describe('Profile Routes', () => {
       expect(response.body.data.user.email).toBe('new@example.com');
     });
 
+    describe('Full Name Management', () => {
+      it('should update fullName with Emirati format', async () => {
+        const fullName = {
+          firstName: 'Mohammed',
+          patronymicName: 'Rashid',
+          familyName: 'Al Maktoum',
+          prefix: 'bin',
+          honorificTitle: 'Sheikh',
+          gender: 'male'
+        };
+
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({ fullName });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.user.fullName).toEqual(fullName);
+      });
+
+      it('should update fullName with expatriate format', async () => {
+        const fullName = {
+          firstName: 'John',
+          familyName: 'Smith',
+          gender: 'male',
+          preferredName: 'Johnny'
+        };
+
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({ fullName });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.user.fullName).toEqual(fullName);
+      });
+
+      it('should reject fullName without required fields', async () => {
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({
+            fullName: {
+              firstName: 'Mohammed'
+              // gender manquant
+            }
+          });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should reject invalid honorific title', async () => {
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({
+            fullName: {
+              firstName: 'Mohammed',
+              gender: 'male',
+              honorificTitle: 'InvalidTitle'
+            }
+          });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should reject invalid prefix', async () => {
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({
+            fullName: {
+              firstName: 'Mohammed',
+              gender: 'male',
+              prefix: 'invalid'
+            }
+          });
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+      });
+
+      it('should update female name with correct prefix and title', async () => {
+        const fullName = {
+          firstName: 'Fatima',
+          patronymicName: 'Mohammed',
+          familyName: 'Al Maktoum',
+          prefix: 'bint',
+          honorificTitle: 'Sheikha',
+          gender: 'female'
+        };
+
+        const response = await request(app)
+          .patch('/api/profile')
+          .set('Authorization', `Bearer ${userToken}`)
+          .send({ fullName });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.user.fullName).toEqual(fullName);
+      });
+    });
+
+    it('should update address successfully with UAE format', async () => {
+      const updatedAddress = {
+        unit: 'Apt 707',
+        buildingName: 'White Swan Building',
+        street: 'Sheikh Zayed Road 34',
+        area: 'Al Wasl',
+        poBox: '54321',
+        emirate: 'DU',
+        country: 'ARE'
+      };
+
+      const response = await request(app)
+        .patch('/api/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          address: updatedAddress
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.user.address).toEqual(updatedAddress);
+    });
+
+    it('should reject invalid emirate code', async () => {
+      const response = await request(app)
+        .patch('/api/profile')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          address: {
+            emirate: 'INVALID'
+          }
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
     it('should reject invalid email format', async () => {
       const response = await request(app)
         .patch('/api/profile')
         .set('Authorization', `Bearer ${userToken}`)
         .send({ email: 'invalid-email' });
 
-      // Vérifier que l'erreur est bien retournée comme attendu
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
         success: false,
@@ -84,7 +223,6 @@ describe('Profile Routes', () => {
     });
 
     it('should reject login with old password after change', async () => {
-      // D'abord changer le mot de passe
       await request(app)
         .post('/api/profile/change-password')
         .set('Authorization', `Bearer ${userToken}`)
@@ -94,7 +232,6 @@ describe('Profile Routes', () => {
           confirmPassword: 'NewPassword123!'
         });
 
-      // Essayer de se connecter avec l'ancien mot de passe
       const response = await request(app)
         .post('/api/auth/login')
         .send({
@@ -106,7 +243,6 @@ describe('Profile Routes', () => {
     });
 
     it('should allow login with new password', async () => {
-      // D'abord changer le mot de passe
       await request(app)
         .post('/api/profile/change-password')
         .set('Authorization', `Bearer ${userToken}`)
@@ -116,7 +252,6 @@ describe('Profile Routes', () => {
           confirmPassword: 'NewPassword123!'
         });
 
-      // Se connecter avec le nouveau mot de passe
       const response = await request(app)
         .post('/api/auth/login')
         .send({
@@ -138,7 +273,6 @@ describe('Profile Routes', () => {
           confirmPassword: 'DifferentPassword123!'
         });
 
-      // Vérifier que l'erreur est bien retournée comme attendu
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
         success: false,
@@ -156,7 +290,6 @@ describe('Profile Routes', () => {
           confirmPassword: 'NewPassword123!'
         });
 
-      // Vérifier que l'erreur est bien retournée comme attendu
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
         success: false,

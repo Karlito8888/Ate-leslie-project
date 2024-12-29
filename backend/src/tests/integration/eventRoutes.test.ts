@@ -1,9 +1,9 @@
 import request from 'supertest';
 import { Types } from 'mongoose';
-import { app } from '../../app';
+import { app } from '../../index';
 import { Event } from '../../models/Event';
 import { User } from '../../models/User';
-import { generateToken } from '../../utils/auth';
+import { generateToken } from '../../index';
 
 describe('Event Routes', () => {
   let adminToken: string;
@@ -25,7 +25,7 @@ describe('Event Routes', () => {
       role: 'admin'
     });
 
-    adminToken = generateToken(adminId);
+    adminToken = generateToken(adminId.toString());
   });
 
   describe('GET /api/events', () => {

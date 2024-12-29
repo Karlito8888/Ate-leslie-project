@@ -1,9 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../utils/ApiError';
+import { Types } from 'mongoose';
 
-export const admin = (req: Request, res: Response, next: NextFunction) => {
-  if (req.user?.role !== 'admin') {
-    throw new ApiError('Admin access required', 403);
+interface AuthRequest extends Request {
+  user: {
+    _id: Types.ObjectId;
+    id: string;
+    role: 'user' | 'admin';
+    username: string;
+    email: string;
+  };
+}
+
+export const admin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Accès non autorisé" });
   }
   next();
 }; 

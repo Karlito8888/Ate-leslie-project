@@ -1,15 +1,14 @@
 // backend/src/routes/authRoutes.ts
 
 import { Router } from 'express';
-import { login, register, forgotPassword, resetPassword } from '../controllers/authController';
-import { validateLogin, validateRegister, validatePasswordReset } from '../middleware/authValidation';
+import { register, login, forgotPassword, resetPassword } from '../controllers/authController';
+import { validateAuth } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Routes publiques
-router.post('/login', validateLogin, login);
-router.post('/register', validateRegister, register);
+router.post('/register', validateAuth, register);
+router.post('/login', validateAuth, login);
 router.post('/forgot-password', forgotPassword);
-router.post('/reset-password/:token', validatePasswordReset, resetPassword);
+router.post('/reset-password/:token', resetPassword);
 
 export default router;

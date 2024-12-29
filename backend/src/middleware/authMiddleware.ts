@@ -1,55 +1,73 @@
 // backend/src/middleware/authMiddleware.ts
 
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, extractToken } from '../utils/auth';
-import { error } from '../utils/responseHandler';
+import jwt from 'jsonwebtoken';
+import { JWT } from '../index';
 import { User } from '../models/User';
-import { AuthRequest } from '../types/express';
 
-export const auth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        role: 'user' | 'admin';
+      };
+    }
+  }
+}
+
+interface JwtPayload {
+  id: string;
+}
+
+export const validateAuth = (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Email et mot de passe requis' 
+    });
+  }
+  
+  if (password.length < 6) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Mot de passe trop court' 
+    });
+  }
+
+  next();
+};
+
+export const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('Auth headers:', req.headers.authorization);
-    const token = extractToken(req.headers.authorization || '');
-    console.log('Extracted token:', token);
-    
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      error(res, 401, 'Non authentifié');
-      return;
+      return res.status(401).json({ success: false, message: 'Token manquant' });
     }
 
-    const decoded = verifyToken(token);
-    console.log('Decoded token:', decoded);
-    const user = await User.findById(decoded.id).select('-password');
-    console.log('Found user:', user);
+    const decoded = jwt.verify(token, JWT.SECRET) as JwtPayload;
+    const user = await User.findById(decoded.id);
     
-    if (!user || typeof user.role !== 'string') {
-      error(res, 401, 'Token invalide');
-      return;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Utilisateur non trouvé' });
     }
 
-    const userObj = user.toObject();
-    (req as AuthRequest).user = {
-      _id: user._id,
+    req.user = {
       id: user._id.toString(),
-      role: user.role,
-      username: userObj.username,
-      email: userObj.email
+      role: user.role
     };
-    console.log('Added user to request:', (req as AuthRequest).user);
     
     next();
-  } catch (err) {
-    console.error('Auth error:', err);
-    error(res, 401, 'Non autorisé');
+  } catch (error) {
+    res.status(401).json({ success: false, message: 'Token invalide' });
   }
 };
 
-export const admin = (req: Request, res: Response, next: NextFunction): void => {
-  const authReq = req as AuthRequest;
-  console.log('Admin check - user:', authReq.user);
-  if (!authReq.user?.role || authReq.user.role !== 'admin') {
-    error(res, 403, 'Accès réservé aux administrateurs');
-    return;
+export const admin = (req: Request, res: Response, next: NextFunction) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Accès admin requis' });
   }
   next();
 }; 

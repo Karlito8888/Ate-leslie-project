@@ -1,7 +1,6 @@
 import request from 'supertest';
-import { app } from '../../app';
+import { app, SECURITY, generateToken } from '../../index';
 import { User } from '../../models/User';
-import { generateToken } from '../../utils/auth';
 import bcrypt from 'bcryptjs';
 
 describe('Auth Routes', () => {
@@ -58,12 +57,20 @@ describe('Auth Routes', () => {
 
   describe('POST /api/auth/login', () => {
     beforeEach(async () => {
-      const hashedPassword = await bcrypt.hash('Password123!', 10);
+      const hashedPassword = await bcrypt.hash('Password123!', SECURITY.SALT_ROUNDS);
       await User.create({
         email: 'test@test.com',
         password: hashedPassword,
         username: 'TestUser',
-        newsletterSubscribed: true
+        newsletterSubscribed: true,
+        fullName: {
+          firstName: 'Fatima',
+          patronymicName: 'Mohammed',
+          familyName: 'Al Nahyan',
+          prefix: 'bint',
+          honorificTitle: 'Sheikha',
+          gender: 'female'
+        }
       });
     });
 
@@ -79,6 +86,8 @@ describe('Auth Routes', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.token).toBeDefined();
       expect(res.body.data.user).toBeDefined();
+      expect(res.body.data.user.fullName.honorificTitle).toBe('Sheikha');
+      expect(res.body.data.user.fullName.prefix).toBe('bint');
     });
 
     it('should reject login with invalid credentials', async () => {

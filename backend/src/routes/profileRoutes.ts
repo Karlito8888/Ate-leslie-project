@@ -1,13 +1,20 @@
-import express from 'express';
-import { getProfile, updateProfile, changePassword } from '../controllers/profileController';
+import { Router } from 'express';
+import { getProfile, updateProfile, changePassword, getMyEvents, getMyReviews, getMyBookmarks } from '../controllers/profileController';
 import { auth } from '../middleware/authMiddleware';
-import { validatePasswordChange } from '../middleware/authValidation';
-import { validateProfileUpdate } from '../middleware/profileValidation';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/', auth, getProfile);
-router.patch('/', auth, validateProfileUpdate, updateProfile);
-router.post('/change-password', auth, validatePasswordChange, changePassword);
+// Protection des routes
+router.use(auth);
+
+// Routes du profil
+router.get('/', getProfile);
+router.patch('/', updateProfile);
+router.post('/change-password', changePassword);
+
+// Routes associées
+router.get('/events', getMyEvents);
+router.get('/reviews', getMyReviews);
+router.get('/bookmarks', getMyBookmarks);
 
 export default router; 

@@ -1,21 +1,41 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Document } from 'mongoose';
 
-const replySchema = new Schema({
-  admin: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  content: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+export interface MessageDocument extends Document {
+  title: string;
+  content: string;
+  type: string;
+  author: Schema.Types.ObjectId;
+  pinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const messageSchema = new Schema<MessageDocument>({
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  type: {
+    type: String,
+    enum: ['info', 'warning', 'error'],
+    default: 'info'
+  },
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  pinned: {
+    type: Boolean,
+    default: false
+  }
+}, {
+  timestamps: true
 });
 
-const schema = new Schema({
-  name: String,
-  email: String,
-  subject: String,
-  message: String,
-  assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
-  status: { type: String, default: 'new' },
-  replies: [replySchema]
-}, { 
-  timestamps: true 
-});
-
-export const Message = model('Message', schema); 
+export const Message = model<MessageDocument>('Message', messageSchema); 

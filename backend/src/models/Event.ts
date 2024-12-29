@@ -1,59 +1,30 @@
 // backend/src/models/Event.ts
 
-import { Schema, model, Types, Document } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface IEvent extends Document {
-  _id: Types.ObjectId;
+// Types pour TypeScript
+export type Status = 'draft' | 'published' | 'cancelled';
+
+export type EventDocument = mongoose.Document & {
   title: string;
-  desc: string;
+  description: string;
   date: Date;
-  category: 'workshop' | 'conference' | 'meetup' | 'other';
-  by: Types.ObjectId;
-  status: 'draft' | 'published' | 'cancelled';
+  location: string;
+  organizer: mongoose.Types.ObjectId;
+  status: Status;
   rating?: number;
-}
+};
 
-const eventSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  desc: {
-    type: String,
-    required: true
-  },
-  date: {
-    type: Date,
-    required: true
-  },
-  category: {
-    type: String,
-    enum: ['workshop', 'conference', 'meetup', 'other'],
-    default: 'other'
-  },
-  by: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'published', 'cancelled'],
-    default: 'draft'
-  },
-  rating: {
-    type: Number,
-    min: 0,
-    max: 5,
-    default: 0
-  }
-}, {
-  timestamps: true
-});
+// Schéma Event
+const eventSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  date: { type: Date, required: true },
+  location: { type: String, required: true },
+  organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['draft', 'published', 'cancelled'], default: 'draft' },
+  rating: { type: Number, min: 0, max: 5, default: 0 }
+}, { timestamps: true });
 
-// Indexation pour la recherche
-eventSchema.index({ title: 'text', desc: 'text' });
-eventSchema.index({ category: 1, date: 1 });
-
-export const Event = model<IEvent>('Event', eventSchema); 
+// Export du modèle
+export const Event = mongoose.model<EventDocument>('Event', eventSchema); 

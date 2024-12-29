@@ -1,9 +1,9 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import { app } from '../../app';
+import { app } from '../../index';
 import { User } from '../../models/User';
 import { Message } from '../../models/Message';
-import { generateToken } from '../../utils/auth';
+import { generateToken } from '../../index';
 
 describe('Admin Routes', () => {
   let adminToken: string;
@@ -23,20 +23,34 @@ describe('Admin Routes', () => {
       email: 'admin@test.com',
       password: 'password123',
       role: 'admin',
-      newsletterSubscribed: true
+      newsletterSubscribed: true,
+      fullName: {
+        firstName: 'Mohammed',
+        patronymicName: 'Rashid',
+        familyName: 'Al Maktoum',
+        prefix: 'bin',
+        honorificTitle: 'Sheikh',
+        gender: 'male'
+      }
     });
     adminId = admin._id.toString();
-    adminToken = generateToken(admin);
+    adminToken = generateToken(adminId);
 
     const user = await User.create({
       username: 'testuser',
       email: 'user@test.com',
       password: 'password123',
       role: 'user',
-      newsletterSubscribed: true
+      newsletterSubscribed: true,
+      fullName: {
+        firstName: 'John',
+        familyName: 'Smith',
+        gender: 'male',
+        preferredName: 'Johnny'
+      }
     });
     userId = user._id.toString();
-    userToken = generateToken(user);
+    userToken = generateToken(userId);
 
     // Créer un message test
     const message = await Message.create({
@@ -83,6 +97,13 @@ describe('Admin Routes', () => {
       expect(response.body.data.users).toBeDefined();
       expect(response.body.data.users.length).toBe(2);
       expect(response.body.data.users[0].password).toBeUndefined();
+      
+      // Vérifier que les fullName sont bien inclus dans la réponse
+      const adminUser = response.body.data.users.find((u: any) => u.role === 'admin');
+      const normalUser = response.body.data.users.find((u: any) => u.role === 'user');
+      
+      expect(adminUser.fullName.honorificTitle).toBe('Sheikh');
+      expect(normalUser.fullName.preferredName).toBe('Johnny');
     });
   });
 
